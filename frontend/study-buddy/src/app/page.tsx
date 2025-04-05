@@ -1,32 +1,47 @@
 // import { useState } from "react";
+"use client";
 import { Suspense } from "react";
 import { Upload } from "@/components/upload";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Chat } from "@/components/chat";
+import { useState } from "react";
+import { FlashCards } from "@/components/flash-cards";
+import { MindMap } from "@/components/mind-map";
 
 export default function Home() {
+  const [taskId, setTaskId] = useState<string | null>(null);
+
+  // Function to handle task ID updates from child components
+  const handleTaskIdUpdate = (newTaskId: string) => {
+    setTaskId(newTaskId);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <main className="container py-10">
-        <div className="mx-auto max-w-3xl space-y-8">
-          <div className="space-y-2 text-center">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Upload Your Video
-            </h2>
-            <p className="text-muted-foreground">
-              We&apos;ll convert it to audio, generate a transcript, and create
-              a summary you can chat with.
-            </p>
-          </div>
-          <Suspense
-            fallback={
-              <div className="h-64 flex items-center justify-center">
-                Loading...
-              </div>
-            }
-          >
-            <Upload />
-          </Suspense>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Study Buddy</h1>
+          <ThemeToggle />
         </div>
-      </main>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-8">
+            <Upload onTaskIdUpdate={handleTaskIdUpdate} />
+            {taskId && (
+              <div className="space-y-4">
+                <FlashCards taskId={taskId} />
+                <MindMap taskId={taskId} />
+              </div>
+            )}
+          </div>
+
+          {taskId && (
+            <div className="space-y-8">
+              <Chat taskId={taskId} />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

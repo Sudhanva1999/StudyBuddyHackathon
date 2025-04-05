@@ -346,7 +346,10 @@ export default function ResultsPage() {
 
                 <TabsContent value="chat" className="mt-4">
                   <Card className="p-0 overflow-hidden h-[500px]">
-                    <ChatInterface summary={data?.summary || ""} />
+                    <ChatInterface
+                      summary={data?.summary || ""}
+                      taskId={taskId}
+                    />
                   </Card>
                 </TabsContent>
 
@@ -368,7 +371,7 @@ export default function ResultsPage() {
                 </TabsContent>
 
                 <TabsContent value="mindmap" className="mt-4">
-                  <Card className="p-0 overflow-hidden h-[500px]">
+                  <Card className="p-0 overflow-hidden h-[800px]">
                     {taskId ? (
                       <>
                         <div className="p-2 text-xs text-muted-foreground">

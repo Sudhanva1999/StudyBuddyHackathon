@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FlashCard } from './ui/flash-card';
-import { Loader2, RefreshCw, Bug, Wand2 } from 'lucide-react';
+import { Loader2, RefreshCw, Wand2 } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface FlashCardData {
@@ -214,16 +214,7 @@ export function FlashCards({ taskId }: FlashCardsProps) {
             <RefreshCw className="h-4 w-4" />
             <span>Retry</span>
           </Button>
-          <Button variant="outline" onClick={handleDebug} className="flex items-center gap-2">
-            <Bug className="h-4 w-4" />
-            <span>Debug</span>
-          </Button>
         </div>
-        {debugInfo && (
-          <div className="mt-4 p-4 bg-muted rounded-md text-xs overflow-auto max-h-40">
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          </div>
-        )}
       </div>
     );
   }
@@ -251,16 +242,7 @@ export function FlashCards({ taskId }: FlashCardsProps) {
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
           </Button>
-          <Button variant="outline" onClick={handleDebug} className="flex items-center gap-2">
-            <Bug className="h-4 w-4" />
-            <span>Debug</span>
-          </Button>
         </div>
-        {debugInfo && (
-          <div className="mt-4 p-4 bg-muted rounded-md text-xs overflow-auto max-h-40">
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          </div>
-        )}
       </div>
     );
   }
@@ -269,20 +251,11 @@ export function FlashCards({ taskId }: FlashCardsProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-end p-4 gap-2">
-        <Button variant="outline" onClick={handleDebug} className="flex items-center gap-2">
-          <Bug className="h-4 w-4" />
-          <span>Debug</span>
-        </Button>
         <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
           <RefreshCw className="h-4 w-4" />
           <span>Refresh</span>
         </Button>
       </div>
-      {debugInfo && (
-        <div className="px-4 pb-4 text-xs overflow-auto max-h-20">
-          <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-        </div>
-      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 h-full overflow-y-auto">
         {flashcards.map((card, index) => (
           <FlashCard
