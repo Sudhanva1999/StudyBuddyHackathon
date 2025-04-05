@@ -4,10 +4,17 @@ import os
 import logging
 from google_speech import transcribe_audio
 from video_to_audio import convert_video_to_audio
-from summarize import generate_summary
+# from summarize import generate_summary
 from gemini_integration import generate_notes, generate_flashcards, generate_mindmap
 import threading
 import uuid
+from flask_pymongo import PyMongo
+from flask_bcrypt import Bcrypt
+from datetime import datetime, UTC
+from dotenv import load_dotenv
+from bson import ObjectId
+from bson.json_util import dumps
+from datetime import timezone
 import json
 import hashlib
 
@@ -35,6 +42,123 @@ GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "your-bucket-name")
 
 # Store processing status and results
 processing_tasks = {}
+
+# app/__init__.py
+load_dotenv()
+
+app.config["MONGO_URI"] = os.getenv("MONGODB_URI")
+mongo = PyMongo(app)
+
+# Create indexes for email uniqueness
+with app.app_context():
+    try:
+        mongo.db.users.create_index("email", unique=True)
+        print("MongoDB connected successfully")
+    except Exception as e:
+        print(f"Error connecting to MongoDB: {str(e)}")
+
+bcrypt = Bcrypt(app)
+
+# app/models.py
+class User:
+    @staticmethod
+    def create_user(firstname, lastname, email, password, role="student", profilepic="default-profile.png"):
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            raise ValueError("Invalid email format")
+        
+        if len(password) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        
+        # Check if email already exists
+        if mongo.db.users.find_one({"email": email}):
+            raise ValueError("Email already exists")
+        
+        user = {
+            "firstname": firstname,
+            "lastname": lastname,
+            "email": email.lower(),
+            "password": bcrypt.generate_password_hash(password).decode('utf-8'),
+            "profilepic": profilepic,
+            "role": role if role in ["student", "professor"] else "student",
+            "timestamp": datetime.now(UTC),
+            "history": []
+        }
+        
+        result = mongo.db.users.insert_one(user)
+        user["_id"] = result.inserted_id
+        return user
+
+    @staticmethod
+    def get_user_by_email(email):
+        return mongo.db.users.find_one({"email": email.lower()})
+
+    @staticmethod
+    def verify_password(stored_password_hash, provided_password):
+        return bcrypt.check_password_hash(stored_password_hash, provided_password)
+
+# MongoDB operators
+PUSH = "$push"
+
+class Metadata:
+    @staticmethod
+    def create_metadata(url_path, transcript="", notes=""):
+        metadata = {
+            "url_path": url_path,
+            "transcript": transcript,
+            "notes": notes,
+            "chatJSON": [],
+            "flashcardsJSON": []
+        }
+        
+        result = mongo.db.metadata.insert_one(metadata)
+        metadata["_id"] = result.inserted_id
+        return metadata
+
+    @staticmethod
+    def add_chat_message(metadata_id, question, answer):
+        chat_entry = {
+            "question": question,
+            "answer": answer,
+            "timestamp": datetime.now(UTC)
+        }
+        
+        mongo.db.metadata.update_one(
+            {"_id": ObjectId(metadata_id)},
+            {PUSH: {"chatJSON": chat_entry}}
+        )
+
+    @staticmethod
+    def add_flashcard(metadata_id, question, answer):
+        flashcard = {
+            "question": question,
+            "answer": answer,
+            "lastReviewed": datetime.now(UTC)
+        }
+        
+        mongo.db.metadata.update_one(
+            {"_id": ObjectId(metadata_id)},
+            {PUSH: {"flashcardsJSON": flashcard}}
+        )
+
+class History:
+    @staticmethod
+    def create_history(user_id, metadata_id):
+        history = {
+            "user": ObjectId(user_id),
+            "metadata": ObjectId(metadata_id),
+            "timestamp": datetime.now(UTC)
+        }
+        
+        result = mongo.db.history.insert_one(history)
+        
+        # Add history reference to user
+        mongo.db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {PUSH: {"history": result.inserted_id}}
+        )
+        
+        return history
+
 
 def get_video_hash(video_name):
     """Generate a hash for the video name to use as a cache key"""
@@ -91,7 +215,7 @@ def process_video(task_id, video_path, audio_output):
         
         processing_tasks[task_id]["status"] = "summarizing"
         # Generate summary
-        summary = generate_summary(title, transcript["text"])
+        # summary = generate_summary(title, transcript["text"])
         
         processing_tasks[task_id]["status"] = "generating_notes"
         # Generate notes
@@ -135,7 +259,17 @@ def process_video(task_id, video_path, audio_output):
 @app.route("/health", methods=["GET"])
 def health_check():
     """Health check endpoint to verify server status."""
-    return jsonify({"status": "running"}), 200
+    try:
+        # Test MongoDB connection
+        mongo.db.command("ping")
+        return jsonify({"status": "running", "database": "connected"}), 200
+    except Exception as e:
+        logger.error(f"Health check error: {str(e)}", exc_info=True)
+        return jsonify({
+            "status": "running",
+            "database": "disconnected",
+            "error": str(e)
+        }), 500
 
 @app.route("/upload", methods=["POST"])
 def upload_video():
@@ -365,6 +499,119 @@ def generate_mindmap_endpoint(task_id):
     except Exception as e:
         logger.error(f"Error generating mind map: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error generating mind map: {str(e)}"}), 500
+@app.route("/api/users", methods=["POST"])
+def create_user():
+    try:
+        data = request.get_json()
+        user = User.create_user(
+            firstname=data["firstname"],
+            lastname=data["lastname"],
+            email=data["email"],
+            password=data["password"],
+            role=data.get("role", "student")
+        )
+        # Remove password from response
+        user.pop("password", None)
+        return jsonify({"message": "User created successfully", "user": dumps(user)}), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    try:
+        data = request.get_json()
+        logger.info(f"Login attempt for email: {data.get('email', 'not provided')}")
+        
+        if not data or "email" not in data or "password" not in data:
+            logger.error("Missing email or password in login request")
+            return jsonify({"error": "Email and password are required"}), 400
+            
+        user = User.get_user_by_email(data["email"])
+        logger.info(f"User found: {bool(user)}")
+        
+        if not user:
+            logger.info("User not found")
+            return jsonify({"error": "Invalid email or password"}), 401
+            
+        if not User.verify_password(user["password"], data["password"]):
+            logger.info("Invalid password")
+            return jsonify({"error": "Invalid email or password"}), 401
+        
+        # Remove password from response and serialize ObjectId
+        user.pop("password", None)
+        # Convert ObjectId to string
+        user["_id"] = str(user["_id"])
+        # Convert history ObjectIds to strings
+        user["history"] = [str(h) for h in user["history"]]
+        
+        logger.info("Login successful")
+        return jsonify({
+            "message": "Login successful",
+            "user": user
+        }), 200
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/api/metadata", methods=["POST"])
+def create_metadata():
+    try:
+        data = request.get_json()
+        metadata = Metadata.create_metadata(
+            url_path=data["url_path"],
+            transcript=data.get("transcript", ""),
+            notes=data.get("notes", "")
+        )
+        # Convert ObjectId to string
+        metadata["_id"] = str(metadata["_id"])
+        return jsonify({
+            "message": "Metadata created successfully",
+            "metadata": metadata
+        }), 201
+    except Exception as e:
+        logger.error(f"Metadata creation error: {str(e)}", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/api/history", methods=["POST"])
+def create_history():
+    try:
+        data = request.get_json()
+        history = History.create_history(
+            user_id=data["user_id"],
+            metadata_id=data["metadata_id"]
+        )
+        return jsonify({"message": "History created successfully", "history": dumps(history)}), 201
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
+
+# Example usage of adding chat messages and flashcards
+@app.route("/api/metadata/<metadata_id>/chat", methods=["POST"])
+def add_chat_message(metadata_id):
+    try:
+        data = request.get_json()
+        Metadata.add_chat_message(
+            metadata_id=metadata_id,
+            question=data["question"],
+            answer=data["answer"]
+        )
+        return jsonify({"message": "Chat message added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/api/metadata/<metadata_id>/flashcards", methods=["POST"])
+def add_flashcard(metadata_id):
+    try:
+        data = request.get_json()
+        Metadata.add_flashcard(
+            metadata_id=metadata_id,
+            question=data["question"],
+            answer=data["answer"]
+        )
+        return jsonify({"message": "Flashcard added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
     logger.info(f"🚀 Server running on http://127.0.0.1:{PORT}")
