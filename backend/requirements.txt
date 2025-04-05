@@ -15,6 +15,8 @@ sentence-transformers
 langchain
 langchain-google-genai
 langchain-core
+pytube
+youtube-transcript-api
 google-generativeai
 python-dotenv
 flask-pymongo

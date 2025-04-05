@@ -16,6 +16,7 @@ from bson import ObjectId
 from bson.json_util import dumps
 import json
 import hashlib
+from youtube_processor import process_youtube_video
 import re
 
 # Configure logging
@@ -499,7 +500,6 @@ def generate_mindmap_endpoint(task_id):
     except Exception as e:
         logger.error(f"Error generating mind map: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error generating mind map: {str(e)}"}), 500
-
 @app.route("/api/users", methods=["POST"])
 def create_user():
     try:
