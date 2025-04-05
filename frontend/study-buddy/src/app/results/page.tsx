@@ -370,7 +370,7 @@ export default function ResultsPage() {
                 </TabsContent>
 
                 <TabsContent value="mindmap" className="mt-4">
-                  <Card className="p-0 overflow-hidden h-[500px]">
+                  <Card className="p-0 overflow-hidden h-[800px]">
                     {taskId ? (
                       <>
                         <div className="p-2 text-xs text-muted-foreground">

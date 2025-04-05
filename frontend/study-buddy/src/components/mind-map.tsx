@@ -749,7 +749,8 @@ export function MindMap({ taskId }: MindMapProps) {
         {/* Flowchart visualization */}
         <div
           ref={flowWrapperRef}
-          className="flex-1 overflow-hidden min-h-[600px] border rounded-md bg-white"
+          className="flex-1 overflow-auto min-h-[600px] border rounded-md bg-white"
+          style={{ height: "700px" }}
         >
           <ReactFlow
             nodes={nodes}
