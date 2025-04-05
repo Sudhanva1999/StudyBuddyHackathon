@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { UploadIcon, File, X, Link } from "lucide-react";
+import { UploadIcon, File, X, Link, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -2771,14 +2771,30 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   className="w-full"
+                  disabled={uploading}
                 />
                 {error && <p className="text-sm text-center text-red-500">{error}</p>}
+                {uploading && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-center text-muted-foreground">
+                      {uploadStatus}
+                    </p>
+                    <Progress value={undefined} className="w-full" />
+                  </div>
+                )}
                 <Button
                   className="w-full"
                   onClick={handleYoutubeUrlSubmit}
                   disabled={uploading}
                 >
-                  {uploading ? "Processing..." : "Process YouTube Video"}
+                  {uploading ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Processing...</span>
+                    </div>
+                  ) : (
+                    "Process YouTube Video"
+                  )}
                 </Button>
               </div>
             </div>

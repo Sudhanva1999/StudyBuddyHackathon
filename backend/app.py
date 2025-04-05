@@ -18,6 +18,8 @@ import json
 import hashlib
 from youtube_processor import process_youtube_video
 import re
+from youtube_transcript_api import YouTubeTranscriptApi
+from urllib.parse import urlparse, parse_qs
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -258,6 +260,75 @@ def process_video(task_id, video_path, audio_output):
         if os.path.exists(audio_output):
             os.remove(audio_output)
 
+def get_video_id(url):
+    """Extract video ID from YouTube URL."""
+    try:
+        # Handle different YouTube URL formats
+        parsed_url = urlparse(url)
+        if parsed_url.hostname in ('youtu.be', 'www.youtu.be'):
+            return parsed_url.path[1:]
+        if parsed_url.hostname in ('youtube.com', 'www.youtube.com'):
+            if parsed_url.path == '/watch':
+                return parse_qs(parsed_url.query)['v'][0]
+            if parsed_url.path[:7] == '/embed/':
+                return parsed_url.path.split('/')[2]
+        return None
+    except Exception as e:
+        logger.error(f"Error extracting video ID: {str(e)}")
+        return None
+
+def process_youtube_video(task_id, url):
+    """Process YouTube video in background thread"""
+    try:
+        logger.info(f"Starting YouTube video processing for task {task_id}")
+        processing_tasks[task_id]["status"] = "uploaded"
+
+        # Get video ID from URL
+        video_id = get_video_id(url)
+        if not video_id:
+            raise ValueError("Invalid YouTube URL")
+
+        # Get transcript from YouTube
+        logger.info(f"Fetching transcript for video ID: {video_id}")
+        processing_tasks[task_id]["status"] = "transcribing"
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        
+        # Combine transcript segments into a single text
+        transcript_text = " ".join([segment["text"] for segment in transcript_list])
+        
+        # Generate summary
+        logger.info("Generating summary from transcript")
+        processing_tasks[task_id]["status"] = "summarizing"
+        summary = generate_notes(f'Please provide a concise summary of the following text:\n{transcript_text}')
+        
+        # Generate notes using the transcript
+        logger.info("Generating notes from transcript")
+        processing_tasks[task_id]["status"] = "generating_notes"
+        notes = generate_notes(f'Summary: {summary} \n\n\nNotes:\n{transcript_text}')
+        
+        # Update task status and results
+        processing_tasks[task_id].update({
+            "status": "completed",
+            "results": {
+                "transcript": {
+                    "text": transcript_text,
+                    "confidence": 1.0  # YouTube transcripts are pre-generated
+                },
+                "summary": summary,
+                "notes": notes,
+                "flashcards": []  # Initialize with empty flashcards array
+            }
+        })
+        
+        # Cache the results
+        save_to_cache(url, processing_tasks[task_id]["results"])
+        logger.info(f"Task {task_id} completed successfully")
+        
+    except Exception as e:
+        logger.error(f"Error during YouTube processing: {str(e)}", exc_info=True)
+        processing_tasks[task_id]["status"] = "error"
+        processing_tasks[task_id]["error"] = str(e)
+
 @app.route("/health", methods=["GET"])
 def health_check():
     """Health check endpoint to verify server status."""
@@ -355,9 +426,14 @@ def get_status(task_id):
     logger.info(f"Current task status: {task['status']}")
     
     response = {
-        "status": task["status"],
-        "filename": task["filename"]
+        "status": task["status"]
     }
+    
+    # Handle both file uploads and YouTube URLs
+    if "filename" in task:
+        response["filename"] = task["filename"]
+    elif "url" in task:
+        response["url"] = task["url"]
     
     # Add cache information if available
     if "cached" in task:
@@ -501,6 +577,7 @@ def generate_mindmap_endpoint(task_id):
     except Exception as e:
         logger.error(f"Error generating mind map: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error generating mind map: {str(e)}"}), 500
+
 @app.route("/api/users", methods=["POST"])
 def create_user():
     try:
@@ -688,6 +765,67 @@ def clear_chat_endpoint(task_id):
     except Exception as e:
         logger.error(f"Error clearing conversation: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error clearing conversation: {str(e)}"}), 500
+
+@app.route("/youtube", methods=["POST"])
+def process_youtube():
+    """Handles YouTube video processing."""
+    try:
+        logger.info("Starting YouTube video processing request")
+        
+        data = request.get_json()
+        if not data or "url" not in data:
+            logger.error("No URL provided in request")
+            return jsonify({"error": "No URL provided"}), 400
+
+        url = data["url"]
+        
+        # Generate unique task ID
+        task_id = str(uuid.uuid4())
+        
+        # Check if this URL is already in the cache
+        cached_results = get_cached_results(url)
+        if cached_results:
+            logger.info(f"YouTube URL {url} found in cache, returning cached results")
+            
+            # Initialize task status with cached results
+            processing_tasks[task_id] = {
+                "status": "completed",
+                "url": url,
+                "results": cached_results,
+                "cached": True
+            }
+            
+            return jsonify({
+                "message": "URL found in cache",
+                "task_id": task_id,
+                "status": "completed",
+                "cached": True
+            }), 200
+
+        logger.info(f"Processing YouTube URL: {url}")
+        
+        # Initialize task status
+        processing_tasks[task_id] = {
+            "status": "uploaded",
+            "url": url
+        }
+        
+        # Start processing in background thread
+        thread = threading.Thread(
+            target=process_youtube_video,
+            args=(task_id, url)
+        )
+        thread.start()
+        
+        return jsonify({
+            "message": "YouTube video processing started",
+            "task_id": task_id,
+            "status": "uploaded"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 if __name__ == "__main__":
     logger.info(f"🚀 Server running on http://127.0.0.1:{PORT}")
