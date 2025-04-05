@@ -179,14 +179,17 @@ def generate_mindmap(transcript_text):
         - Keep all text concise and clear
         - Ensure logical connections between concepts
         - Use meaningful branch types
-        - Focus on key concepts and their relationships"""
+        - Focus on key concepts and their relationships
+        - Return ONLY the JSON object, no additional text or explanations"""
 
         # Get response from Gemini
         response = model.generate_content(prompt)
         logger.info("Received response from Gemini")
         
         # Clean the response text to remove any markdown formatting
-        response_text = response.text
+        response_text = response.text.strip()
+        
+        # Remove any markdown code block syntax
         if response_text.startswith("```json"):
             response_text = response_text[7:]
         if response_text.startswith("```"):
@@ -194,8 +197,14 @@ def generate_mindmap(transcript_text):
         if response_text.endswith("```"):
             response_text = response_text[:-3]
         
-        # Strip any leading/trailing whitespace
-        response_text = response_text.strip()
+        # Find the first '{' and last '}' to extract just the JSON object
+        start_idx = response_text.find('{')
+        end_idx = response_text.rfind('}')
+        
+        if start_idx == -1 or end_idx == -1:
+            raise ValueError("No valid JSON object found in response")
+            
+        response_text = response_text[start_idx:end_idx + 1].strip()
         
         try:
             # Parse the cleaned JSON
