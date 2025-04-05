@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-import React, { useEffect, useState, useCallback, useMemo, CSSProperties } from 'react';
-import { Loader2, RefreshCw, Bug, Wand2 } from 'lucide-react';
-=======
 import React, { useEffect, useState, useCallback, useMemo, CSSProperties, useRef } from 'react';
 import { Loader2, RefreshCw, Bug, Wand2, ExternalLink } from 'lucide-react';
->>>>>>> c18754456ad028ef6473435a3171aec9465de989
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import ReactFlow, { 
