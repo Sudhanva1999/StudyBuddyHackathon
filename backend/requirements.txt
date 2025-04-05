@@ -15,3 +15,11 @@ sentence-transformers
 langchain
 langchain-google-genai
 langchain-core
+google-generativeai
+python-dotenv
+flask-pymongo
+flask-bcrypt
+pymongo
+dnspython
+regex
+sentence-transformers

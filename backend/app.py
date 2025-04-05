@@ -10,11 +10,10 @@ import threading
 import uuid
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from bson import ObjectId
 from bson.json_util import dumps
-from datetime import timezone
 import json
 import hashlib
 
@@ -46,7 +45,7 @@ processing_tasks = {}
 # app/__init__.py
 load_dotenv()
 
-app.config["MONGO_URI"] = os.getenv("MONGODB_URI")
+app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "MONGO_URI")
 mongo = PyMongo(app)
 
 # Create indexes for email uniqueness
@@ -80,7 +79,7 @@ class User:
             "password": bcrypt.generate_password_hash(password).decode('utf-8'),
             "profilepic": profilepic,
             "role": role if role in ["student", "professor"] else "student",
-            "timestamp": datetime.now(UTC),
+            "timestamp": datetime.now(timezone.utc),
             "history": []
         }
         
@@ -119,7 +118,7 @@ class Metadata:
         chat_entry = {
             "question": question,
             "answer": answer,
-            "timestamp": datetime.now(UTC)
+            "timestamp": datetime.now(timezone.utc)
         }
         
         mongo.db.metadata.update_one(
@@ -132,7 +131,7 @@ class Metadata:
         flashcard = {
             "question": question,
             "answer": answer,
-            "lastReviewed": datetime.now(UTC)
+            "lastReviewed": datetime.now(timezone.utc)
         }
         
         mongo.db.metadata.update_one(
@@ -146,7 +145,7 @@ class History:
         history = {
             "user": ObjectId(user_id),
             "metadata": ObjectId(metadata_id),
-            "timestamp": datetime.now(UTC)
+            "timestamp": datetime.now(timezone.utc)
         }
         
         result = mongo.db.history.insert_one(history)
