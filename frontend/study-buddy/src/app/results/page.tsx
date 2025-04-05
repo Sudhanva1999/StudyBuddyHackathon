@@ -182,20 +182,18 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b">
-        <div className="container flex h-16 items-center justify-between">
-          <h1 className="text-2xl font-bold">StudyBuddy</h1>
-          <Button
-            variant="outline"
-            onClick={() => (window.location.href = "/")}
-          >
-            New Upload
-          </Button>
-        </div>
-      </header>
-
       <main className="m-4 py-8">
-        <h2 className="text-3xl font-bold mb-6">{filename}</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold">{filename}</h2>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => (window.location.href = "/")}
+            >
+              New Upload
+            </Button>
+          </div>
+        </div>
 
         <ResizablePanelGroup
           direction="horizontal"
