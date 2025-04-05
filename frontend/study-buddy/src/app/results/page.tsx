@@ -49,7 +49,7 @@ export default function ResultsPage() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<any>(null);
   const filename = searchParams.get("filename") || "video";
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [fileURL, setFileURL] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("transcript");
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -72,7 +72,10 @@ export default function ResultsPage() {
           console.log("Loaded results data:", parsedData);
           console.log("Results data keys:", Object.keys(parsedData));
           if (parsedData.flashcards) {
-            console.log("Flashcards in results data:", parsedData.flashcards.length);
+            console.log(
+              "Flashcards in results data:",
+              parsedData.flashcards.length
+            );
           } else {
             console.warn("No flashcards in results data");
           }
@@ -90,23 +93,31 @@ export default function ResultsPage() {
     fetchData();
   }, []);
 
-  // Load video from sessionStorage
+  // load video file from IndexedDB
   useEffect(() => {
-    const videoUrl = sessionStorage.getItem("videoUrl");
-    if (videoUrl) {
-      console.log("Video URL found in sessionStorage");
-      setVideoUrl(videoUrl);
-    } else {
-      console.warn("No video URL found in sessionStorage");
-      setVideoUrl(null);
-    }
-
-    // Clean up the video URL when component unmounts
-    return () => {
-      if (videoUrl) {
-        URL.revokeObjectURL(videoUrl);
-      }
+    // Load the file from IndexedDB when the page reloads
+    const loadFileFromDB = async () => {
+      const db = await window.indexedDB.open("fileDB", 1);
+      db.onupgradeneeded = (event) => {
+        const target = event.target as IDBOpenDBRequest;
+        target.result.createObjectStore("files");
+      };
+      db.onsuccess = () => {
+        const transaction = db.result.transaction("files", "readonly");
+        const store = transaction.objectStore("files");
+        const request = store.get("uploadedFile");
+        request.onsuccess = () => {
+          if (request.result) {
+            const filename = localStorage.getItem("filename");
+            const newFile = new File([request.result], filename, {
+              type: "video/mp4",
+            });
+            setFileURL(URL.createObjectURL(newFile));
+          }
+        };
+      };
     };
+    loadFileFromDB();
   }, []);
 
   const handlePlayPause = () => {
@@ -165,7 +176,7 @@ export default function ResultsPage() {
     // Force re-render of flashcards component when tab is activated
     if (value === "flashcards") {
       console.log("Flashcards tab activated, incrementing key");
-      setFlashcardsKey(prev => prev + 1);
+      setFlashcardsKey((prev) => prev + 1);
     }
   };
 
@@ -194,18 +205,14 @@ export default function ResultsPage() {
           <ResizablePanel defaultSize={60} minSize={30}>
             <div className="h-full p-4 space-y-4">
               <div className="relative bg-black aspect-video rounded-md overflow-hidden">
-                {videoUrl ? (
+                {fileURL ? (
                   <video
                     ref={videoRef}
                     className="w-full h-full"
-                    src={videoUrl}
-                    controls={false}
+                    src={fileURL.length > 0 ? fileURL : "/placeholder.mp4"}
+                    poster="/placeholder.svg?height=720&width=1280"
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleLoadedMetadata}
-                    onError={(e) => {
-                      console.error("Error loading video:", e);
-                      setVideoUrl(null);
-                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -286,11 +293,17 @@ export default function ResultsPage() {
                     <MessageSquare className="h-4 w-4" />
                     <span>Chat</span>
                   </TabsTrigger>
-                  <TabsTrigger value="flashcards" className="flex items-center gap-2">
+                  <TabsTrigger
+                    value="flashcards"
+                    className="flex items-center gap-2"
+                  >
                     <BookOpen className="h-4 w-4" />
                     <span>Flashcards</span>
                   </TabsTrigger>
-                  <TabsTrigger value="mindmap" className="flex items-center gap-2">
+                  <TabsTrigger
+                    value="mindmap"
+                    className="flex items-center gap-2"
+                  >
                     <GitBranch className="h-4 w-4" />
                     <span>Mind Map</span>
                   </TabsTrigger>

@@ -2481,7 +2481,7 @@ export function Upload() {
         const uploadResponse = await response.json();
         localStorage.setItem("uploadResponse", JSON.stringify(uploadResponse));
         setUploadStatus("Upload successful! Processing video...");
-        
+
         // Save file to IndexedDB
         const db = await window.indexedDB.open("fileDB", 1);
         db.onsuccess = () => {
@@ -2562,15 +2562,23 @@ export function Upload() {
       }
 
       const data = await response.json();
-      
+
+      // store in indexedDB
+      const db = await window.indexedDB.open("fileDB", 1);
+      db.onsuccess = () => {
+        const transaction = db.result.transaction("files", "readwrite");
+        const store = transaction.objectStore("files");
+        store.put(file, "uploadedFile");
+      };
+
       // Store the task ID and filename for the processing page
       localStorage.setItem("taskId", data.task_id);
       localStorage.setItem("filename", file.name);
-      
+
       // Create a URL for the video file
-      const videoUrl = URL.createObjectURL(file);
-      sessionStorage.setItem("videoUrl", videoUrl);
-      
+      const fileURL = URL.createObjectURL(file);
+      localStorage.setItem("fileURL", fileURL);
+
       // Navigate to processing page
       router.push(`/processing?filename=${encodeURIComponent(file.name)}`);
     } catch (err) {
@@ -2665,11 +2673,7 @@ export function Upload() {
               </p>
             </div>
           )}
-          {error && (
-            <p className="text-sm text-center text-red-500">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm text-center text-red-500">{error}</p>}
           <Button
             className="w-full"
             onClick={handleUpload}
