@@ -10,7 +10,9 @@ export default function Home() {
 
   // Function to handle task ID updates from child components
   const handleTaskIdUpdate = (newTaskId: string) => {
-    setTaskId(newTaskId);
+    setTimeout(() => {
+      setTaskId(newTaskId);
+    }, 1000);
   };
 
   return (
