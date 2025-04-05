@@ -20,6 +20,7 @@ import {
   VolumeX,
   GripVertical,
   BookOpen,
+  GitBranch,
 } from "lucide-react";
 import { ChatInterface } from "@/components/chat-interface";
 import {
@@ -28,6 +29,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { FlashCards } from "@/components/flash-cards";
+import { MindMap } from "@/components/mind-map";
 
 // Mock data for demonstration
 const mockTranscript = `
@@ -265,7 +267,7 @@ export default function ResultsPage() {
                 onValueChange={handleTabChange}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger
                     value="transcript"
                     className="flex items-center gap-2"
@@ -287,6 +289,10 @@ export default function ResultsPage() {
                   <TabsTrigger value="flashcards" className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
                     <span>Flashcards</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="mindmap" className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4" />
+                    <span>Mind Map</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -345,6 +351,23 @@ export default function ResultsPage() {
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-500">
                         No flashcards available
+                      </div>
+                    )}
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="mindmap" className="mt-4">
+                  <Card className="p-0 overflow-hidden h-[500px]">
+                    {taskId ? (
+                      <>
+                        <div className="p-2 text-xs text-muted-foreground">
+                          Task ID: {taskId}
+                        </div>
+                        <MindMap taskId={taskId} />
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-500">
+                        No mind map available
                       </div>
                     )}
                   </Card>

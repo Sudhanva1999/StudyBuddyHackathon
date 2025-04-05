@@ -62,56 +62,208 @@ def generate_notes(transcript_text):
         return f"Error generating notes: {str(e)}"
 
 def generate_flashcards(transcript_text):
-    """
-    Generate flashcards from the transcript using Google's Gemini model.
-    
-    Args:
-        transcript_text (str): The transcript text to generate flashcards from
-        
-    Returns:
-        list: List of dictionaries containing question and answer pairs
-    """
+    """Generate flashcards from transcript text using Gemini."""
     try:
+        logger.info("Starting flashcard generation")
+        
         # Initialize the model
-        logger.info("Initializing Gemini model for flashcard generation")
+        logger.info("Initializing Gemini model")
         model = genai.GenerativeModel('gemini-1.5-pro')
         
-        # Create the prompt
-        prompt = f"""Generate 10 meaningful flashcards from the following transcript. 
-        Each flashcard should have a question on the front and the answer on the back.
-        The questions should test understanding of key concepts, definitions, and important points.
+        # Construct the prompt for Gemini
+        prompt = f"""Based on the following transcript, generate 5-7 meaningful flashcards.
+        Each flashcard should have a question on the front and a concise answer on the back.
+        Focus on key concepts, definitions, and important points.
         Format the response as a JSON array of objects with 'question' and 'answer' fields.
+        Do not include any markdown formatting or code block syntax.
 
         Transcript:
         {transcript_text}
 
         Example format:
         [
-            {{"question": "What is...?", "answer": "The answer is..."}},
-            {{"question": "How does...?", "answer": "It works by..."}}
-        ]
+            {{
+                "question": "What is the main topic discussed?",
+                "answer": "The main topic is..."
+            }},
+            {{
+                "question": "What are the key points about X?",
+                "answer": "The key points are..."
+            }}
+        ]"""
 
-        Guidelines:
-        - Create questions that test understanding, not just recall
-        - Include a mix of definition, concept, and application questions
-        - Keep answers concise but complete
-        - Ensure questions are clear and unambiguous
-        - Focus on the most important concepts from the transcript
-        """
-        
-        # Generate the response
-        logger.info("Generating flashcards with Gemini")
+        # Get response from Gemini
         response = model.generate_content(prompt)
-        logger.info("Flashcard generation successful")
+        logger.info("Received response from Gemini")
         
-        # Parse the JSON response
+        # Clean the response text to remove any markdown formatting
+        response_text = response.text
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]  # Remove ```json
+        if response_text.startswith("```"):
+            response_text = response_text[3:]  # Remove ```
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]  # Remove trailing ```
+        
+        # Strip any leading/trailing whitespace
+        response_text = response_text.strip()
+        
         try:
-            flashcards = json.loads(response.text)
+            # Parse the cleaned JSON
+            flashcards = json.loads(response_text)
+            logger.info(f"Successfully generated {len(flashcards)} flashcards")
             return flashcards
         except json.JSONDecodeError as e:
-            logger.error(f"Error parsing flashcard JSON: {str(e)}", exc_info=True)
+            logger.error(f"Error parsing flashcard JSON: {str(e)}")
+            logger.error(f"Failed to parse JSON: {response_text}")
             return []
             
     except Exception as e:
-        logger.error(f"Error generating flashcards with Gemini: {str(e)}", exc_info=True)
+        logger.error(f"Error generating flashcards: {str(e)}")
         return [] 
+
+def generate_mindmap(transcript_text):
+    """Generate a mind map structure from transcript text using Gemini."""
+    try:
+        logger.info("Starting mind map generation")
+        
+        # Initialize the model
+        logger.info("Initializing Gemini model")
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        
+        # Construct the prompt for Gemini
+        prompt = f"""Based on the following transcript, generate a well-structured mind map.
+        Follow these specific guidelines for the mind map structure:
+
+        1. Central Topic:
+           - Should be the main subject/concept from the transcript
+           - Keep it concise but descriptive
+
+        2. Main Branches (4-6 branches):
+           - Each branch should represent a major category or aspect
+           - Use single words or short phrases
+           - Common categories include: Key Concepts, Applications, Components, Principles, Methods, etc.
+
+        3. Sub-branches:
+           - Each main branch should have 2-4 sub-branches
+           - Use clear, concise terms
+           - Should directly relate to the parent branch
+           - Can include specific examples, details, or characteristics
+
+        4. Visual Organization:
+           - Ensure logical grouping of related concepts
+           - Maintain consistent level of detail across branches
+           - Use clear hierarchical relationships
+
+        Format the response as a JSON object with this exact structure:
+        {{
+            "topic": "Central Topic",
+            "branches": [
+                {{
+                    "name": "Main Branch 1",
+                    "type": "concept",  // concept, method, principle, application, etc.
+                    "subbranches": [
+                        {{ 
+                            "name": "Sub-branch 1.1",
+                            "description": "Brief explanation if needed"
+                        }}
+                    ]
+                }}
+            ]
+        }}
+
+        Analyze this transcript and create a comprehensive mind map:
+        {transcript_text}
+
+        Remember:
+        - Keep all text concise and clear
+        - Ensure logical connections between concepts
+        - Use meaningful branch types
+        - Focus on key concepts and their relationships"""
+
+        # Get response from Gemini
+        response = model.generate_content(prompt)
+        logger.info("Received response from Gemini")
+        
+        # Clean the response text to remove any markdown formatting
+        response_text = response.text
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]
+        if response_text.startswith("```"):
+            response_text = response_text[3:]
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]
+        
+        # Strip any leading/trailing whitespace
+        response_text = response_text.strip()
+        
+        try:
+            # Parse the cleaned JSON
+            mindmap = json.loads(response_text)
+            
+            # Validate the structure
+            if not isinstance(mindmap, dict) or 'topic' not in mindmap or 'branches' not in mindmap:
+                raise ValueError("Invalid mind map structure")
+            
+            # Validate and process each branch
+            for branch in mindmap['branches']:
+                if not isinstance(branch, dict) or 'name' not in branch:
+                    raise ValueError("Invalid branch structure")
+                
+                # Ensure type exists
+                if 'type' not in branch:
+                    branch['type'] = 'concept'
+                
+                # Validate subbranches
+                if 'subbranches' in branch:
+                    if not isinstance(branch['subbranches'], list):
+                        branch['subbranches'] = []
+                    else:
+                        # Ensure each subbranch has required fields
+                        for subbranch in branch['subbranches']:
+                            if not isinstance(subbranch, dict) or 'name' not in subbranch:
+                                branch['subbranches'].remove(subbranch)
+                            if 'description' not in subbranch:
+                                subbranch['description'] = ""
+                else:
+                    branch['subbranches'] = []
+            
+            logger.info("Successfully generated and validated mind map structure")
+            return mindmap
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing mind map JSON: {str(e)}")
+            logger.error(f"Failed to parse JSON: {response_text}")
+            return {
+                "topic": "Error in Mind Map Generation",
+                "branches": [
+                    {
+                        "name": "Error",
+                        "type": "error",
+                        "subbranches": [
+                            {
+                                "name": "Failed to parse response",
+                                "description": str(e)
+                            }
+                        ]
+                    }
+                ]
+            }
+            
+    except Exception as e:
+        logger.error(f"Error generating mind map: {str(e)}")
+        return {
+            "topic": "Error in Mind Map Generation",
+            "branches": [
+                {
+                    "name": "Error",
+                    "type": "error",
+                    "subbranches": [
+                        {
+                            "name": "Generation failed",
+                            "description": str(e)
+                        }
+                    ]
+                }
+            ]
+        } 

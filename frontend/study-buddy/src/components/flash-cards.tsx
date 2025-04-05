@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FlashCard } from './ui/flash-card';
-import { Loader2, RefreshCw, Bug } from 'lucide-react';
+import { Loader2, RefreshCw, Bug, Wand2 } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface FlashCardData {
@@ -20,6 +20,7 @@ export function FlashCards({ taskId }: FlashCardsProps) {
   const [error, setError] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [generating, setGenerating] = useState(false);
 
   const fetchFlashcards = useCallback(async () => {
     if (!taskId) {
@@ -73,7 +74,7 @@ export function FlashCards({ taskId }: FlashCardsProps) {
             statusMessage += 'Creating summary.';
             break;
           case 'generating_notes':
-            statusMessage += 'Generating notes and flashcards.';
+            statusMessage += 'Generating notes.';
             break;
           default:
             statusMessage += 'Please wait.';
@@ -92,6 +93,53 @@ export function FlashCards({ taskId }: FlashCardsProps) {
       setLoading(false);
     }
   }, [taskId]);
+
+  const generateFlashcards = async () => {
+    if (!taskId) {
+      console.error("No taskId provided for flashcard generation");
+      return;
+    }
+    
+    try {
+      setGenerating(true);
+      setError(null);
+      console.log("Generating flashcards for taskId:", taskId);
+      
+      const url = `http://localhost:5001/generate_flashcards/${taskId}`;
+      console.log("Generating flashcards from URL:", url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log("Generation response status:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Generation failed:", errorData);
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Generated flashcards data:", JSON.stringify(data, null, 2));
+      
+      if (data.status === 'success' && data.flashcards) {
+        console.log("Flashcards generated successfully:", data.flashcards.length);
+        setFlashcards(data.flashcards);
+      } else {
+        console.warn("Unexpected generation response format:", data);
+        setError("Unexpected response format from server");
+      }
+    } catch (err) {
+      console.error("Error generating flashcards:", err);
+      setError('Failed to generate flashcards: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   // Fetch flashcards when component mounts
   useEffect(() => {
@@ -143,7 +191,8 @@ export function FlashCards({ taskId }: FlashCardsProps) {
     loading, 
     error, 
     processingStatus, 
-    flashcardsCount: flashcards.length 
+    flashcardsCount: flashcards.length,
+    generating
   });
 
   if (loading) {
@@ -185,6 +234,19 @@ export function FlashCards({ taskId }: FlashCardsProps) {
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <p className="text-muted-foreground">No flashcards available</p>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={generateFlashcards} 
+            className="flex items-center gap-2"
+            disabled={generating}
+          >
+            {generating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 className="h-4 w-4" />
+            )}
+            <span>{generating ? "Generating..." : "Generate Flashcards"}</span>
+          </Button>
           <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
