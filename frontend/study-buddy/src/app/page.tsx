@@ -1,8 +1,5 @@
-// import { useState } from "react";
 "use client";
-import { Suspense } from "react";
 import { Upload } from "@/components/upload";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Chat } from "@/components/chat";
 import { useState } from "react";
 import { FlashCards } from "@/components/flash-cards";
@@ -19,11 +16,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Study Buddy</h1>
-          <ThemeToggle />
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-8">
             <Upload onTaskIdUpdate={handleTaskIdUpdate} />
