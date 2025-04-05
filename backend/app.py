@@ -4,7 +4,6 @@ import os
 import logging
 from google_speech import transcribe_audio
 from video_to_audio import convert_video_to_audio
-# from summarize import generate_summary
 from gemini_integration import generate_notes, generate_flashcards, generate_mindmap
 import threading
 import uuid
