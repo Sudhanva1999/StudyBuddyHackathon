@@ -21,6 +21,8 @@ import {
   GripVertical,
   BookOpen,
   GitBranch,
+  HelpCircle,
+  ClipboardList,
 } from "lucide-react";
 import { ChatInterface } from "@/components/chat-interface";
 import {
@@ -30,6 +32,38 @@ import {
 } from "@/components/ui/resizable";
 import { FlashCards } from "@/components/flash-cards";
 import { MindMap } from "@/components/mind-map";
+import { Quiz } from "@/components/quiz";
+
+// Custom tooltip styles
+const tooltipStyles = `
+  .tab-tooltip {
+    position: relative;
+  }
+  
+  .tab-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.1s, visibility 0.1s;
+    pointer-events: none;
+    z-index: 1000;
+  }
+  
+  .tab-tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
+  }
+`;
 
 // Mock data for demonstration
 const mockTranscript = `
@@ -108,7 +142,7 @@ export default function ResultsPage() {
         const request = store.get("uploadedFile");
         request.onsuccess = () => {
           if (request.result) {
-            const filename = localStorage.getItem("filename");
+            const filename = localStorage.getItem("filename") || "video";
             const newFile = new File([request.result], filename, {
               type: "video/mp4",
             });
@@ -182,6 +216,7 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <style jsx global>{tooltipStyles}</style>
       <main className="m-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold">{filename}</h2>
@@ -197,7 +232,7 @@ export default function ResultsPage() {
 
         <ResizablePanelGroup
           direction="horizontal"
-          className="min-h-[600px] rounded-lg border"
+          className="min-h-[800px] rounded-lg border"
         >
           {/* Video Panel */}
           <ResizablePanel defaultSize={60} minSize={30}>
@@ -272,43 +307,53 @@ export default function ResultsPage() {
                 onValueChange={handleTabChange}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger
                     value="transcript"
-                    className="flex items-center gap-2"
+                    className="flex items-center justify-center tab-tooltip"
+                    data-tooltip="Transcript"
                   >
-                    <FileText className="h-4 w-4" />
-                    <span>Transcript</span>
+                    <FileText className="h-5 w-5" />
                   </TabsTrigger>
                   <TabsTrigger
                     value="summary"
-                    className="flex items-center gap-2"
+                    className="flex items-center justify-center tab-tooltip"
+                    data-tooltip="Notes"
                   >
-                    <FileText className="h-4 w-4" />
-                    <span>Notes</span>
+                    <ClipboardList className="h-5 w-5" />
                   </TabsTrigger>
-                  <TabsTrigger value="chat" className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    <span>Chat</span>
+                  <TabsTrigger 
+                    value="chat" 
+                    className="flex items-center justify-center tab-tooltip"
+                    data-tooltip="Chat"
+                  >
+                    <MessageSquare className="h-5 w-5" />
                   </TabsTrigger>
                   <TabsTrigger
                     value="flashcards"
-                    className="flex items-center gap-2"
+                    className="flex items-center justify-center tab-tooltip"
+                    data-tooltip="Flashcards"
                   >
-                    <BookOpen className="h-4 w-4" />
-                    <span>Flashcards</span>
+                    <BookOpen className="h-5 w-5" />
                   </TabsTrigger>
                   <TabsTrigger
                     value="mindmap"
-                    className="flex items-center gap-2"
+                    className="flex items-center justify-center tab-tooltip"
+                    data-tooltip="Mind Map"
                   >
-                    <GitBranch className="h-4 w-4" />
-                    <span>Mind Map</span>
+                    <GitBranch className="h-5 w-5" />
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="quiz"
+                    className="flex items-center justify-center tab-tooltip"
+                    data-tooltip="Quiz"
+                  >
+                    <HelpCircle className="h-5 w-5" />
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="transcript" className="mt-4">
-                  <Card className="p-6 h-[500px] overflow-y-auto">
+                  <Card className="p-6 h-[800px] overflow-y-auto">
                     <div className="prose dark:prose-invert max-w-none">
                       <h3 className="text-xl font-semibold mb-4">Transcript</h3>
                       <div className="whitespace-pre-line">
@@ -319,7 +364,7 @@ export default function ResultsPage() {
                 </TabsContent>
 
                 <TabsContent value="summary" className="mt-4">
-                  <Card className="p-6 h-[500px] overflow-y-auto">
+                  <Card className="p-6 h-[800px] overflow-y-auto">
                     <div className="prose dark:prose-invert max-w-none">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xl font-semibold">
@@ -345,16 +390,15 @@ export default function ResultsPage() {
                 </TabsContent>
 
                 <TabsContent value="chat" className="mt-4">
-                  <Card className="p-0 overflow-hidden h-[500px]">
+                  <Card className="p-0 overflow-hidden h-[800px]">
                     <ChatInterface
-                      summary={data?.summary || ""}
-                      taskId={taskId}
+                      taskId={taskId || ""}
                     />
                   </Card>
                 </TabsContent>
 
                 <TabsContent value="flashcards" className="mt-4">
-                  <Card className="p-0 overflow-hidden h-[500px]">
+                  <Card className="p-0 overflow-hidden h-[800px]">
                     {taskId ? (
                       <>
                         <div className="p-2 text-xs text-muted-foreground">
@@ -382,6 +426,23 @@ export default function ResultsPage() {
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-500">
                         No mind map available
+                      </div>
+                    )}
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="quiz" className="mt-4">
+                  <Card className="p-0 overflow-hidden h-[800px]">
+                    {taskId ? (
+                      <>
+                        <div className="p-2 text-xs text-muted-foreground">
+                          Task ID: {taskId}
+                        </div>
+                        <Quiz taskId={taskId} />
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-500">
+                        No quiz available
                       </div>
                     )}
                   </Card>
