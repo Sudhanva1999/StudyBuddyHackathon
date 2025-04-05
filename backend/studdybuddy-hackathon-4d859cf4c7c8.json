@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "studdybuddy-hackathon",
+  "private_key_id": "4d859cf4c7c83d7f0c9ac777b1e7722f724fa457",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCzuf62gjs3Gq4s\nUn/QvPuqTvSNTNMiAiITjOqc2V2GSp0ktD2jdxQuYmOIIIV/Q0eUdchYj+WgmbAg\nY77ALn9XOosIEcW9FjjkedMhEdDqv/lU47KTLXNKpjOt45z86yTFSlV1N8TlelMy\nl2Aur/lIlwXEo1iYpy7cA//47SW8ElsKrgZDB1EQKzriCMM7G5q0E1vZj67Go9Ns\n2PE5S4vUl+RtTowi8YYtaZW1PjzBolhA/Hmv4JvIg0yYBJFJ0VTQqxZqaGNjN5q7\n/OVO0nkXn+A1uKVt/cMH4C7XysB+NPnEM2kUo1VcUJbeivTEPDn9Qa0QB4HZ+0M5\nC9u9hFvVAgMBAAECggEAKrVQm2MgGiybZgnmuJ4n+aUQhQFUDLlQCrBKUiJvEInr\nhLzWBuG1qH4V49PClWbR/CvvA2iSaxMKYPAC9J04Amz1e+HpSNEejOCMNMgMirQ6\n1hrTpRjAVGVhU3mKpSllkAJlg1jQz609VwDUyNNlXAQTSVJ9q6zSvFKxAaCs/l9C\nHRYfwEF81nWmQIyr33sNPZ9iDcRHlGAJ2WBbIVFyNdH9+tf8bFkfWvenhvr5gAHw\nqKvNS9gbdUVbCu2L42icOsgSyQKgGEpJxqCZd16hWwOdcbQZxhEkg1WKfAXE+m0p\nu71HbnfGkmxmpcD8L9A6nMNaOAY/cSbEqQR4f89CIQKBgQDk74lDkNbaxC5Y3rC9\ng0R+gKkY+jqfG5I4Vx/D++As0CovmHYC/XPHm0MhfgD6Q25kuytjMD5wuJmEx5WN\nHUjf3ShAWuqFFlNYw1bKrPOE4Rj8gEPVLH0NH8j+HywyjlSgy2r0GqvlKUBPEtnG\nBlyJ/yC2FTs2F47YoC2sLyUisQKBgQDI+TP8JkN6wrquzgtW6XoCRmQT21L3xdYe\n3OjdICZlZi7d0p54wIkM8D4AcpsSoBMlaShNGpK4NenCSUs92zSFbqkzqHu4sPHN\nOo0y2r7Ufj9G+UeNJO0m5RLDYa6Ol2EMMuqc19qa5PVBQkqZ4X8nzXCATmc1u+Ti\n/m/xXatsZQKBgHEzmLYWKodmNlyvUMmE3RuIVxUItm/yXC0Lt6NbKpA+Jn3+b2wv\nE08CEQHAoo8dRLr+agfT1Sw7u32SivqKHnzDiKG50vkX/wKHJKV3O7ra61X/vors\nQrF4pBQ0KdCd3G7d5vbpMVJRQYFYGuL2Rk/eHbiraunmYDXxjmPzs/MhAoGBAKu4\ns4CaOUJlrRm8GNhUetoCx3RoDQaFVqXcYGTBGc2+eAE1/A51hSU3CeNcCcDqYjGv\nHq5zLDaWanyGH/JkoQX6Pj1TkxOGrbWMeCWh3zi1/t9oFIk3qiN3zIaBqqNQGa5Q\nu0L09Wcwh5cRS6kckoex9JTNaUbym2qRuZjlTpo5AoGAeM1osdG9oq70QZKVaj2d\nyRsCNnGbtgrN/z2r8kRI5iURsJn9vvUWVDBCKY4PMiFUkI6eNOKiS2boS2mawJ8k\nWoZEe8QU/XGCB6m7okdemqjl7LQWZ1tewUpQGa9mlxR2Xji3QqFBfSLGtD48alGm\ncSNjXSdVdJo3BI3s3Rx/kxY=\n-----END PRIVATE KEY-----\n",
+  "client_email": "study-buddy-gemini@studdybuddy-hackathon.iam.gserviceaccount.com",
+  "client_id": "116532754466072073181",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/study-buddy-gemini%40studdybuddy-hackathon.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
