@@ -16,6 +16,7 @@ from bson import ObjectId
 from bson.json_util import dumps
 import json
 import hashlib
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -498,10 +499,23 @@ def generate_mindmap_endpoint(task_id):
     except Exception as e:
         logger.error(f"Error generating mind map: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error generating mind map: {str(e)}"}), 500
+
 @app.route("/api/users", methods=["POST"])
 def create_user():
     try:
         data = request.get_json()
+        logger.info(f"Registration attempt for email: {data.get('email', 'not provided')}")
+        
+        if not data:
+            logger.error("No data provided in registration request")
+            return jsonify({"error": "No data provided"}), 400
+            
+        required_fields = ["firstname", "lastname", "email", "password"]
+        for field in required_fields:
+            if field not in data:
+                logger.error(f"Missing required field: {field}")
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+        
         user = User.create_user(
             firstname=data["firstname"],
             lastname=data["lastname"],
@@ -511,11 +525,14 @@ def create_user():
         )
         # Remove password from response
         user.pop("password", None)
+        logger.info("User created successfully")
         return jsonify({"message": "User created successfully", "user": dumps(user)}), 201
     except ValueError as e:
+        logger.error(f"Validation error during registration: {str(e)}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        return jsonify({"error": "Internal server error"}), 500
+        logger.error(f"Unexpected error during registration: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 @app.route("/api/login", methods=["POST"])
 def login():
