@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import React, { useEffect, useState, useCallback, useMemo, CSSProperties } from 'react';
 import { Loader2, RefreshCw, Bug, Wand2 } from 'lucide-react';
+=======
+import React, { useEffect, useState, useCallback, useMemo, CSSProperties, useRef } from 'react';
+import { Loader2, RefreshCw, Bug, Wand2, ExternalLink } from 'lucide-react';
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import ReactFlow, { 
@@ -10,8 +15,15 @@ import ReactFlow, {
   useNodesState, 
   useEdgesState,
   Position,
+<<<<<<< HEAD
   Handle
 } from 'reactflow';
+=======
+  Handle,
+  ReactFlowInstance
+} from 'reactflow';
+import html2canvas from 'html2canvas';
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
 import 'reactflow/dist/style.css';
 
 interface MindMapBranch {
@@ -78,6 +90,12 @@ export function MindMap({ taskId }: MindMapProps) {
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+<<<<<<< HEAD
+=======
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const flowWrapperRef = useRef<HTMLDivElement>(null);
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
 
   const fetchMindMap = useCallback(async () => {
     if (!taskId) {
@@ -402,6 +420,134 @@ export function MindMap({ taskId }: MindMapProps) {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // Function to export mind map as PNG
+  const exportMindMap = useCallback(async () => {
+    if (!flowWrapperRef.current || !mindmap) return;
+    
+    try {
+      setExporting(true);
+      
+      // Wait for the next frame to ensure the flow is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Fit the view to ensure all nodes are visible
+      if (reactFlowInstance) {
+        reactFlowInstance.fitView({ padding: 0.2 });
+        // Wait for the view to be fitted
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Create a clone of the flow container to avoid modifying the original
+      const flowContainer = flowWrapperRef.current;
+      const clone = flowContainer.cloneNode(true) as HTMLElement;
+      
+      // Apply styles to ensure proper rendering
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '-9999px';
+      document.body.appendChild(clone);
+      
+      try {
+        // Convert all colors to RGB before capturing
+        const convertColorsToRGB = (element: HTMLElement) => {
+          // Convert background colors
+          const style = window.getComputedStyle(element);
+          const bgColor = style.backgroundColor;
+          if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+            element.style.backgroundColor = bgColor;
+          }
+          
+          // Convert text colors
+          const textColor = style.color;
+          if (textColor && textColor !== 'rgba(0, 0, 0, 0)' && textColor !== 'transparent') {
+            element.style.color = textColor;
+          }
+          
+          // Convert border colors
+          const borderColor = style.borderColor;
+          if (borderColor && borderColor !== 'rgba(0, 0, 0, 0)' && borderColor !== 'transparent') {
+            element.style.borderColor = borderColor;
+          }
+          
+          // Process child elements
+          Array.from(element.children).forEach(child => {
+            if (child instanceof HTMLElement) {
+              convertColorsToRGB(child);
+            }
+          });
+        };
+        
+        // Convert colors in the clone
+        convertColorsToRGB(clone);
+        
+        // Use html2canvas to capture the flow
+        const canvas = await html2canvas(clone, {
+          backgroundColor: '#ffffff',
+          scale: 2, // Higher quality for retina displays
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          width: flowContainer.clientWidth,
+          height: flowContainer.clientHeight,
+          onclone: (clonedDoc) => {
+            // Additional color conversion for React Flow specific elements
+            const flowElements = clonedDoc.getElementsByClassName('react-flow__node');
+            Array.from(flowElements).forEach((element) => {
+              if (element instanceof HTMLElement) {
+                // Set explicit RGB colors for nodes
+                const isRoot = element.getAttribute('data-isroot') === 'true';
+                const type = element.getAttribute('data-type');
+                
+                if (isRoot) {
+                  element.style.backgroundColor = 'rgb(59, 130, 246)'; // #3b82f6
+                } else if (type === 'error') {
+                  element.style.backgroundColor = 'rgb(239, 68, 68)'; // #ef4444
+                } else {
+                  element.style.backgroundColor = 'rgb(30, 64, 175)'; // #1e40af
+                }
+                
+                element.style.color = 'rgb(255, 255, 255)'; // white
+                element.style.borderColor = 'rgb(255, 255, 255)'; // white
+              }
+            });
+            
+            // Convert edge colors
+            const edges = clonedDoc.getElementsByClassName('react-flow__edge');
+            Array.from(edges).forEach((edge) => {
+              if (edge instanceof HTMLElement) {
+                edge.style.stroke = 'rgb(147, 197, 253)'; // #93c5fd
+              }
+            });
+          }
+        });
+        
+        // Convert canvas to image
+        const image = canvas.toDataURL('image/png');
+        
+        // Create a temporary link to download the image
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = `${mindmap.topic.replace(/\s+/g, '_')}_mindmap.png`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } finally {
+        // Clean up the clone
+        document.body.removeChild(clone);
+      }
+      
+    } catch (error) {
+      console.error('Error exporting mind map:', error);
+      setError('Failed to export mind map: ' + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setExporting(false);
+    }
+  }, [reactFlowInstance, mindmap]);
+
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
   if (loading) {
     console.log("Rendering loading state");
     return (
@@ -458,6 +604,22 @@ export function MindMap({ taskId }: MindMapProps) {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
+<<<<<<< HEAD
+=======
+            onClick={exportMindMap}
+            className="flex items-center gap-2"
+            disabled={!mindmap || exporting}
+          >
+            {exporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ExternalLink className="h-4 w-4" />
+            )}
+            <span>{exporting ? "Exporting..." : "Open in New Window"}</span>
+          </Button>
+          <Button 
+            variant="outline" 
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
             onClick={generateMindMap} 
             className="flex items-center gap-2"
             disabled={generating}
@@ -467,7 +629,11 @@ export function MindMap({ taskId }: MindMapProps) {
             ) : (
               <Wand2 className="h-4 w-4" />
             )}
+<<<<<<< HEAD
             <span>{generating ? "Generating..." : "Generate Mind Map"}</span>
+=======
+            <span>{generating ? "Regenerating..." : "Regenerate"}</span>
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
           </Button>
           <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
@@ -486,6 +652,22 @@ export function MindMap({ taskId }: MindMapProps) {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
+<<<<<<< HEAD
+=======
+              onClick={exportMindMap}
+              className="flex items-center gap-2"
+              disabled={!mindmap || exporting}
+            >
+              {exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="h-4 w-4" />
+              )}
+              <span>{exporting ? "Exporting..." : "Open in New Window"}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
               onClick={generateMindMap} 
               className="flex items-center gap-2"
               disabled={generating}
@@ -505,13 +687,21 @@ export function MindMap({ taskId }: MindMapProps) {
         </div>
         
         {/* Flowchart visualization */}
+<<<<<<< HEAD
         <div className="flex-1 overflow-hidden min-h-[600px] border rounded-md bg-white">
+=======
+        <div ref={flowWrapperRef} className="flex-1 overflow-hidden min-h-[600px] border rounded-md bg-white">
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
           <ReactFlow
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             nodeTypes={{ mindMapNode: MindMapNode }}
+<<<<<<< HEAD
+=======
+            onInit={setReactFlowInstance}
+>>>>>>> c18754456ad028ef6473435a3171aec9465de989
             fitView
             minZoom={0.5}
             maxZoom={1.5}

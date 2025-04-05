@@ -8,6 +8,8 @@ from summarize import generate_summary
 from gemini_integration import generate_notes, generate_flashcards, generate_mindmap
 import threading
 import uuid
+import json
+import hashlib
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,8 +22,10 @@ CORS(app)
 # Define Upload & Output Folders
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "outputs"
+CACHE_FOLDER = "cache"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+os.makedirs(CACHE_FOLDER, exist_ok=True)
 
 # Set the default port
 PORT = int(os.environ.get("PORT", 5001))
@@ -32,9 +36,43 @@ GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "your-bucket-name")
 # Store processing status and results
 processing_tasks = {}
 
+def get_video_hash(video_name):
+    """Generate a hash for the video name to use as a cache key"""
+    return hashlib.md5(video_name.encode()).hexdigest()
+
+def get_cached_results(video_name):
+    """Check if results for this video are already cached"""
+    video_hash = get_video_hash(video_name)
+    cache_file = os.path.join(CACHE_FOLDER, f"{video_hash}.json")
+    
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, 'r') as f:
+                logger.info(f"Retrieved cached results for video: {video_name}")
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Error reading cache file: {str(e)}")
+    
+    return None
+
+def save_to_cache(video_name, results):
+    """Save results to cache for future use"""
+    video_hash = get_video_hash(video_name)
+    cache_file = os.path.join(CACHE_FOLDER, f"{video_hash}.json")
+    
+    try:
+        with open(cache_file, 'w') as f:
+            json.dump(results, f)
+        logger.info(f"Saved results to cache for video: {video_name}")
+    except Exception as e:
+        logger.error(f"Error saving to cache: {str(e)}")
+
 def process_video(task_id, video_path, audio_output):
     """Process video in background thread"""
     try:
+        # Extract video name from the path
+        video_name = os.path.basename(video_path).split('_', 1)[1] if '_' in os.path.basename(video_path) else os.path.basename(video_path)
+        
         processing_tasks[task_id]["status"] = "converting"
         # Convert video to audio
         convert_video_to_audio(video_path, audio_output)
@@ -64,13 +102,18 @@ def process_video(task_id, video_path, audio_output):
             notes = f"Error generating notes: {str(notes_error)}"
             
         # Store results without generating flashcards
-        processing_tasks[task_id]["status"] = "completed"
-        processing_tasks[task_id]["results"] = {
+        results = {
             "transcript": transcript,
             "summary": summary,
             "notes": notes,
             "flashcards": []  # Initialize with empty flashcards array
         }
+        
+        # Save results to cache
+        save_to_cache(video_name, results)
+        
+        processing_tasks[task_id]["status"] = "completed"
+        processing_tasks[task_id]["results"] = results
         logger.info(f"Task {task_id} completed. Transcript saved but flashcards not generated yet.")
         
         # Clean up temporary files
@@ -112,6 +155,26 @@ def upload_video():
         # Generate unique task ID
         task_id = str(uuid.uuid4())
         
+        # Check if this video is already in the cache
+        cached_results = get_cached_results(file.filename)
+        if cached_results:
+            logger.info(f"Video {file.filename} found in cache, returning cached results")
+            
+            # Initialize task status with cached results
+            processing_tasks[task_id] = {
+                "status": "completed",
+                "filename": file.filename,
+                "results": cached_results,
+                "cached": True
+            }
+            
+            return jsonify({
+                "message": "File found in cache",
+                "task_id": task_id,
+                "status": "completed",
+                "cached": True
+            }), 200
+
         logger.info(f"Processing file: {file.filename}")
         video_path = os.path.join(UPLOAD_FOLDER, f"{task_id}_{file.filename}")
         audio_output = os.path.join(OUTPUT_FOLDER, f"{task_id}_{os.path.splitext(file.filename)[0]}.mp3")
@@ -160,6 +223,10 @@ def get_status(task_id):
         "filename": task["filename"]
     }
     
+    # Add cache information if available
+    if "cached" in task:
+        response["cached"] = task["cached"]
+    
     if task["status"] == "completed":
         logger.info("Task completed, including results in response")
         if "results" not in task:
@@ -194,7 +261,8 @@ def debug_tasks():
             "filename": task.get("filename", "unknown"),
             "has_results": "results" in task,
             "results_keys": list(task.get("results", {}).keys()) if "results" in task else [],
-            "flashcards_count": len(task.get("results", {}).get("flashcards", [])) if "results" in task and "flashcards" in task["results"] else 0
+            "flashcards_count": len(task.get("results", {}).get("flashcards", [])) if "results" in task and "flashcards" in task["results"] else 0,
+            "cached": task.get("cached", False)
         }
     
     logger.info(f"Debug tasks response: {debug_tasks}")
@@ -233,6 +301,12 @@ def generate_flashcards_endpoint(task_id):
         if "results" in task:
             task["results"]["flashcards"] = flashcards
             logger.info(f"Updated task {task_id} with {len(flashcards)} flashcards")
+            
+            # If this was a cached result, update the cache file
+            if task.get("cached", False):
+                video_name = task["filename"]
+                save_to_cache(video_name, task["results"])
+                logger.info(f"Updated cache for video: {video_name}")
         
         return jsonify({
             "status": "success",
@@ -276,6 +350,12 @@ def generate_mindmap_endpoint(task_id):
         if "results" in task:
             task["results"]["mindmap"] = mindmap
             logger.info(f"Updated task {task_id} with mind map")
+            
+            # If this was a cached result, update the cache file
+            if task.get("cached", False):
+                video_name = task["filename"]
+                save_to_cache(video_name, task["results"])
+                logger.info(f"Updated cache for video: {video_name}")
         
         return jsonify({
             "status": "success",
