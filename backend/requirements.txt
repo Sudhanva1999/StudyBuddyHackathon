@@ -19,3 +19,6 @@ flask-cors
 google-generativeai
 google-cloud-speech
 google-cloud-storage
+langchain
+langchain-google-genai
+langchain-core

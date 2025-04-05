@@ -1,83 +1,94 @@
-<<<<<<< HEAD
-## Lecture Notes:  Grabbing Attention in the Digital Age
+## Hash Table Performance: Size and Collision Handling
 
-**Introduction:**
+### Introduction
 
-This lecture focuses on the crucial aspect of capturing and retaining audience attention, particularly in the context of online content and short-form media. The speaker emphasizes the importance of tailoring content to a specific target audience rather than trying to appeal to everyone.  They use the example of a TED Talk format to illustrate the need for brevity and conciseness in a world of dwindling attention spans.
+This lecture explores the impact of hash table size on performance, focusing on collision handling techniques. We'll revisit open addressing with linear probing and chaining, analyzing their performance characteristics and trade-offs.  The lecture also touches upon the relationship between these techniques and the choice of hash function (covered in the next lecture).  Finally, we'll compare hash table performance with binary search trees, highlighting the strengths and weaknesses of each data structure.
 
-**Key Concepts:**
+### Key Concepts
 
-* **Targeted Communication:** The core message revolves around understanding and speaking directly to your target audience.  Instead of trying to please everyone, focus on resonating with the specific group that will genuinely appreciate and benefit from your content. This contrasts sharply with the common approach of trying to go viral by appealing to the widest possible audience.  This can be visualized as a focused laser beam (targeted communication) versus a scattered light bulb (generalized communication).
+* **Collision Handling:** When two or more keys hash to the same index in a hash table, a collision occurs. Two primary methods for resolving collisions are:
 
-* **Dwindling Attention Spans:**  The speaker points out the significant shift in attention spans since the rise of social media and readily available online content.  In 2009, longer-form content like 18-minute TED Talks might have held an audience's attention. However, modern audiences, constantly bombarded with information, have much shorter attention spans.  This necessitates a shift in content creation strategies.  The rise of platforms like TikTok, with its emphasis on short-form videos, exemplifies this trend.
+    * **Open Addressing (Linear Probing):**  If a collision occurs, the algorithm probes the next available slot in the hash table (using a linear increment). This continues until an empty slot is found.
 
-* **Value of Brevity:**  The speaker advocates for brevity and concise messaging, especially in formats like TED Talks.  Their own talk, clocking in under a minute, serves as a practical example. This approach recognizes the limited time window content creators have to capture and maintain audience interest.  It underscores the importance of delivering impactful messages quickly and efficiently.
+    * **Chaining (Separate Chaining):** Each index in the hash table points to a linked list (or other data structure).  All keys hashing to the same index are stored in that list.
 
-* **The "Click" Mentality:** The lecturer criticizes the prevalent "click" mentality where content creators prioritize views and engagement metrics over genuine connection with the audience.  Chasing viral fame often leads to generalized content that lacks depth and fails to resonate with any specific group.  This can be seen as a focus on quantity over quality, which can be detrimental to building a loyal audience.
+* **Load Factor (λ):**  A critical metric for hash table performance. It is defined as:
 
+    λ = Number of elements in the hash table / Size of the hash table
 
-**Examples and Illustrations:**
+    * For open addressing, λ cannot exceed 1.
+    * For chaining, λ can be greater than 1.
 
-* **TED Talk Format:** The speaker uses the TED Talk format as a case study for effective communication in a short time frame.  They challenge the traditional 18-minute format, arguing that shorter, more impactful presentations are better suited to modern audiences.
-* **Personal Example:** The speaker's own presentation, delivered in under a minute, serves as a real-time example of the principles they advocate.  By limiting themselves to a tight timeframe, they demonstrate the effectiveness of concise communication.
-* **Joke about Inflation:**  The closing joke about the cost of balloons being attributed to inflation, while seemingly simple, serves multiple purposes.  It reinforces the point about brevity, provides a memorable moment, and subtly connects economic concepts to everyday life.
+* **Expected Number of Comparisons:** The average number of probes (or comparisons) needed to find an element (or determine its absence) in the hash table.  This is directly affected by the load factor.
 
-**Practical Applications:**
+### Performance Analysis
 
-* **Content Creation:**  Apply the principles of brevity and targeted communication to all forms of content creation, including social media posts, blog articles, videos, and presentations.
-* **Audience Analysis:** Before creating any content, identify your target audience and tailor your message specifically to their interests and needs.  Consider demographics, psychographics, and online behavior.
-* **Prioritizing Quality over Quantity:**  Focus on creating high-quality content that resonates deeply with your target audience rather than chasing viral trends or maximizing click-through rates.
-* **Embracing Short-Form Content:** Explore the potential of short-form video and other concise content formats to capture and maintain audience attention in the digital age.  Platforms like TikTok, Instagram Reels, and YouTube Shorts offer opportunities for impactful storytelling in a condensed format.
-=======
-## Lecture Notes:  Capturing Attention in the Digital Age
+* **Open Addressing (Linear Probing):**
 
-**Introduction:**
+    * As the load factor approaches 1, performance degrades significantly.  The expected number of comparisons approaches linear time (O(n)).
+    * An approximate formula for the expected number of comparisons for a successful search is:
 
-These lecture notes explore the challenge of maintaining audience engagement in the current digital landscape, characterized by short attention spans and information overload.  The speaker uses humor and brevity to illustrate the importance of concise and impactful communication, particularly in online platforms like TED Talks. The core message revolves around tailoring content to the specific audience and platform rather than seeking general approval.
+        (1 + 1 / (1 - λ)) / 2
 
-**Section 1: The Problem of Diminishing Attention Spans**
+* **Chaining (Separate Chaining):**
 
-* **The Digital Age and Attention:** The speaker argues that modern audiences, particularly online, have significantly shorter attention spans than in the past. This is attributed to the constant bombardment of information and the ease of access to alternative content.  
-    * **2009 as a Reference Point:**  The mention of 2009 suggests a pre-mobile/social media boom era when longer-form content was more readily consumed. The implication is that the shift towards shorter, more digestible content has accelerated since then.
-* **TED Talks as a Case Study:** TED Talks, known for their intellectual depth, are used to illustrate the challenge of holding viewer attention.  Even in a format designed for focused learning, maintaining engagement for extended periods has become difficult.
-* **The Speaker's Approach:**  The speaker deliberately keeps their talk concise, aiming for under a minute, to demonstrate the power of brevity.  This self-imposed time limit serves as a practical example of adapting to the current digital climate.
+    * Performance is less sensitive to a high load factor compared to open addressing.
+    * The expected number of comparisons for a successful search is approximately:
 
+        1 + λ / 2
 
-**Section 2: Targeting the Right Audience**
+    *  This assumes a uniform distribution of keys across the hash table indices.
 
-* **Ignoring General Opinion:** The speaker emphasizes the importance of focusing on the target audience rather than trying to please everyone. This includes disregarding general internet opinions and concentrating on those who truly connect with the message.
-* **"They're the Ones Who Get It":** This phrase highlights the significance of identifying and catering to the specific audience who will appreciate and benefit from the content.
-* **Avoiding the "Random Facebook Scroller":**  The speaker uses the image of a casual Facebook scroller to represent the broad, often unengaged online audience.  The message is to avoid creating content aimed at capturing this fleeting attention, but rather to focus on a more targeted approach.
+* **Comparison Table (Approximate Values):**
 
+| Load Factor (λ) | Open Addressing (Expected Comparisons) | Chaining (Expected Comparisons) |
+|---|---|---|
+| 0 | 1 | 1 |
+| 0.5 | 1.5 | 1.25 |
+| 0.75 | 2.5 | 1.375 |
+| 0.9 | 5.5 | 1.45 |
+| → 1 | → ∞ | → 1 + λ/2 |
 
-**Section 3:  The Power of Brevity**
+* **Comparison with Binary Search Trees:**
 
-* **"Keep it Quick":**  This is the core takeaway regarding TED Talks and, more broadly, online content.  The speaker advocates for shorter, more impactful presentations.
-* **Time as a Valuable Commodity:** The speaker constantly references the time elapsed during their talk, reinforcing the idea that time is a precious resource for the audience. This underscores the need to respect the audience's time by delivering value quickly.
-* **Under a Minute TED Talk:** The speaker's attempt to deliver a sub-minute TED Talk is a provocative demonstration of their commitment to brevity.  It challenges the conventional format and highlights the potential of concise communication.
-
-
-**Section 4: Humor as an Engagement Tool**
-
-* **The Final Joke:**  The speaker concludes with a short joke about inflation and the cost of balloons. This serves several purposes:
-    * **Maintaining Attention:** Humor can recapture waning attention, especially towards the end of a presentation.
-    * **Memorable Takeaway:**  A well-placed joke can make the presentation more memorable.
-    * **Illustrating a Point:** The joke subtly relates to the theme of "inflation" of information in the digital age, connecting back to the overall message.
-
->>>>>>> c18754456ad028ef6473435a3171aec9465de989
+    * Balanced binary search trees offer logarithmic time complexity (O(log n)) for search, insertion, and deletion.
+    * Hash tables with a good load factor can outperform binary search trees, especially for smaller datasets.  However, as the load factor increases in open addressing, hash table performance degrades.
+    * Binary search trees require more storage due to pointers/references for left and right children (and potentially a parent node).  Open addressing with linear probing is more space-efficient when the load factor is reasonable. Chaining requires additional space for the linked lists, impacting its space efficiency compared to open addressing.
 
 
-**Summary and Key Takeaways:**
+### Example and Exercise
 
-<<<<<<< HEAD
-The core message of this lecture is the importance of targeted communication and brevity in the digital age.  Instead of trying to reach everyone, focus on creating high-quality content that resonates with a specific audience.  Recognize the shrinking attention spans of modern audiences and adapt your content creation strategies accordingly. Prioritize concise, impactful messaging and avoid the trap of chasing viral fame at the expense of genuine connection.  The key to effective communication is understanding your audience and delivering value in a concise and engaging manner.  Remember, quality trumps quantity, and a targeted message delivered effectively is far more valuable than a generalized message that reaches a wider but less engaged audience. This approach is crucial for cutting through the noise of the digital landscape and making a lasting impact.
-=======
-* **Brevity is Key:** In the digital age, concise and impactful communication is crucial.
-* **Target Your Audience:** Focus on engaging the specific audience who resonates with your message, rather than seeking general approval.
-* **Respect Your Audience's Time:** Recognize that time is a valuable commodity for your audience and deliver content efficiently.
-* **Humor Can Enhance Engagement:** Strategically used humor can help maintain attention and improve message recall.
+* **Scenario:**  Store 60,000 items and maintain an average of 2.5 comparisons per search.
 
-**Further Considerations:**
+* **Open Addressing (Linear Probing):**
 
-While the speaker champions brevity, it's important to note that the ideal length of content depends on the platform and subject matter.  While a one-minute TED Talk may be unconventional, it effectively underscores the importance of respecting the audience's time and adapting to the evolving digital landscape.  The principles outlined – focusing on the target audience, delivering value quickly, and using humor effectively – can be applied to various forms of communication, from social media posts to formal presentations.
->>>>>>> c18754456ad028ef6473435a3171aec9465de989
+    * To achieve 2.5 comparisons, the load factor should be approximately 0.75.
+    * Hash Table Size = 60,000 / 0.75 = 80,000
+
+* **Chaining (Separate Chaining):**
+
+    * To achieve 2.5 comparisons:
+
+        2.5 = 1 + λ / 2
+        λ = 3
+
+    * Hash Table Size = 60,000 / 3 = 20,000 (initial array size)
+
+* **Storage Comparison:** While chaining appears to require a smaller hash table, it actually uses more memory overall.
+
+    * **Open Addressing:** 80,000 references (approximately).
+    * **Chaining:**  20,000 references for the hash table + (60,000 * 2) = 120,000 references for the linked list elements (assuming singly linked lists, requiring one "next" pointer) = 140,000 total references.
+
+
+### Summary
+
+* Load factor significantly impacts hash table performance.
+* Open addressing with linear probing is space-efficient but sensitive to high load factors.  Performance approaches linear time as λ approaches 1.
+* Chaining performs better at higher load factors but consumes more memory due to the linked lists.
+* Binary search trees offer consistent logarithmic time complexity but require more storage than open addressing.
+* The choice between open addressing and chaining depends on the specific application and the balance between performance and memory usage.  Open addressing is preferred when storage is a major concern.
+
+
+### Key Takeaway
+
+The size of the hash table and the collision handling technique are intertwined.  Careful consideration of the load factor and the expected number of comparisons is essential for designing an efficient hash table implementation. Rehashing is commonly employed to maintain a reasonable load factor and ensure constant time performance for open addressing.  When memory is at a premium, open addressing is a strong contender, but chaining offers more robust performance at the cost of increased storage requirements.

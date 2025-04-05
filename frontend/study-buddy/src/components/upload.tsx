@@ -8,13 +8,18 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export function Upload() {
+interface UploadProps {
+  onTaskIdUpdate?: (taskId: string) => void;
+}
+
+export function Upload({ onTaskIdUpdate }: UploadProps) {
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
 
   const sampleReponse = {
     audio_path: "outputs/1. Hash Tables Size.mp3",
@@ -2539,19 +2544,14 @@ export function Upload() {
     setUploadStatus("");
   };
 
-  const handleUpload = async () => {
-    if (!file) {
-      setError("Please select a file first");
-      return;
-    }
-
-    setUploading(true);
-    setError(null);
-
-    const formData = new FormData();
-    formData.append("video", file);
-
+  const handleUpload = async (file: File) => {
     try {
+      setUploading(true);
+      setError(null);
+
+      const formData = new FormData();
+      formData.append("video", file);
+
       const response = await fetch("http://localhost:5001/upload", {
         method: "POST",
         body: formData,
@@ -2579,10 +2579,19 @@ export function Upload() {
       const fileURL = URL.createObjectURL(file);
       localStorage.setItem("fileURL", fileURL);
 
+      if (data.task_id) {
+        setTaskId(data.task_id);
+        if (onTaskIdUpdate) {
+          onTaskIdUpdate(data.task_id);
+        }
+      }
+
       // Navigate to processing page
       router.push(`/processing?filename=${encodeURIComponent(file.name)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
+      setUploading(false);
+    } finally {
       setUploading(false);
     }
   };
@@ -2676,7 +2685,7 @@ export function Upload() {
           {error && <p className="text-sm text-center text-red-500">{error}</p>}
           <Button
             className="w-full"
-            onClick={handleUpload}
+            onClick={() => handleUpload(file)}
             disabled={uploading}
           >
             {uploading ? "Processing..." : "Upload and Process"}
