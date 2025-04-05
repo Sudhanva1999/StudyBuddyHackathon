@@ -214,7 +214,7 @@ def process_video(task_id, video_path, audio_output):
         
         processing_tasks[task_id]["status"] = "summarizing"
         # Generate summary
-        # summary = generate_summary(title, transcript["text"])
+        summary = generate_notes(f'Please provide a concise summary of the following text:\n{transcript["text"]}')
         
         processing_tasks[task_id]["status"] = "generating_notes"
         # Generate notes
