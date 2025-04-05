@@ -29,6 +29,7 @@
     "reactflow": "^11.11.4",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.1",
+    "study-buddy": "file:",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7"
   },
