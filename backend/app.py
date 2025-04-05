@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+# allow all origins
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Define Upload & Output Folders
 UPLOAD_FOLDER = "uploads"
