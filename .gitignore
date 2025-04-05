@@ -15,6 +15,7 @@ env/
 ENV/
 
 /backend/ainote
+backend/__pycache__
 
 # Media files
 *.mp3
