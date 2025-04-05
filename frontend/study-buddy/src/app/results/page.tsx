@@ -356,12 +356,7 @@ export default function ResultsPage() {
                 <TabsContent value="flashcards" className="mt-4">
                   <Card className="p-0 overflow-hidden h-[500px]">
                     {taskId ? (
-                      <>
-                        <div className="p-2 text-xs text-muted-foreground">
-                          Task ID: {taskId} | Key: {flashcardsKey}
-                        </div>
-                        <FlashCards key={flashcardsKey} taskId={taskId} />
-                      </>
+                      <FlashCards key={flashcardsKey} taskId={taskId} />
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-500">
                         No flashcards available
@@ -373,12 +368,7 @@ export default function ResultsPage() {
                 <TabsContent value="mindmap" className="mt-4">
                   <Card className="p-0 overflow-hidden h-[800px]">
                     {taskId ? (
-                      <>
-                        <div className="p-2 text-xs text-muted-foreground">
-                          Task ID: {taskId}
-                        </div>
                         <MindMap taskId={taskId} />
-                      </>
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-500">
                         No mind map available
