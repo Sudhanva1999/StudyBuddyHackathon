@@ -348,7 +348,10 @@ export default function ResultsPage() {
 
                 <TabsContent value="chat" className="mt-4">
                   <Card className="p-0 overflow-hidden h-[500px]">
-                    <ChatInterface summary={data?.summary || ""} />
+                    <ChatInterface
+                      summary={data?.summary || ""}
+                      taskId={taskId}
+                    />
                   </Card>
                 </TabsContent>
 

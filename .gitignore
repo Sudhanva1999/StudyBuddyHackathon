@@ -338,3 +338,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# ignore video files
+*.mp4
+*.mov
+*.avi
+*.wmv
+*.flv
+*.mkv

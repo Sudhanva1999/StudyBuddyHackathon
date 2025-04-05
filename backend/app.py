@@ -5,6 +5,7 @@ import logging
 from google_speech import transcribe_audio
 from video_to_audio import convert_video_to_audio
 from gemini_integration import generate_notes, generate_flashcards, generate_mindmap
+from chat_integration import chat_with_context, clear_conversation
 import threading
 import uuid
 from flask_pymongo import PyMongo
@@ -611,6 +612,65 @@ def add_flashcard(metadata_id):
         return jsonify({"message": "Flashcard added successfully"}), 200
     except Exception as e:
         return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/chat/<task_id>", methods=["POST"])
+def chat_endpoint(task_id):
+    """Handle chat questions using LangChain conversation with context."""
+    logger.info(f"Chat request received for task_id: {task_id}")
+    
+    if task_id not in processing_tasks:
+        logger.error(f"Task not found: {task_id}")
+        return jsonify({"error": "Task not found"}), 404
+    
+    task = processing_tasks[task_id]
+    
+    # Check if the task is completed
+    if task["status"] != "completed":
+        logger.error(f"Cannot chat with task in status: {task['status']}")
+        return jsonify({"error": f"Cannot chat with task in status: {task['status']}"}), 400
+    
+    # Check if we have the necessary data
+    if "results" not in task or "notes" not in task["results"]:
+        logger.error(f"No notes found for task: {task_id}")
+        return jsonify({"error": "No notes found for this task"}), 400
+    
+    try:
+        # Get the question from the request
+        data = request.get_json()
+        if not data or "question" not in data:
+            logger.error("No question provided in request")
+            return jsonify({"error": "No question provided"}), 400
+        
+        question = data["question"]
+        
+        # Use the generated notes as context
+        context = task["results"]["notes"]
+        
+        # Generate response using LangChain
+        logger.info(f"Generating chat response for task {task_id}")
+        response = chat_with_context(task_id, context, question)
+        
+        return jsonify({
+            "status": "success",
+            "response": response
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Error in chat endpoint: {str(e)}"}), 500
+
+@app.route("/chat/<task_id>/clear", methods=["POST"])
+def clear_chat_endpoint(task_id):
+    """Clear the conversation history for a specific task."""
+    try:
+        clear_conversation(task_id)
+        return jsonify({
+            "status": "success",
+            "message": "Conversation history cleared"
+        }), 200
+    except Exception as e:
+        logger.error(f"Error clearing conversation: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Error clearing conversation: {str(e)}"}), 500
 
 if __name__ == "__main__":
     logger.info(f"🚀 Server running on http://127.0.0.1:{PORT}")
