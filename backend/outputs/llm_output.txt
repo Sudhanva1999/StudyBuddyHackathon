@@ -1,94 +1,81 @@
-## Hash Table Performance: Size and Collision Handling
+# The Evolution and Future of Banking: Lecture Notes
 
-### Introduction
+**I. Introduction: The Enigma of Modern Banking**
 
-This lecture explores the impact of hash table size on performance, focusing on collision handling techniques. We'll revisit open addressing with linear probing and chaining, analyzing their performance characteristics and trade-offs.  The lecture also touches upon the relationship between these techniques and the choice of hash function (covered in the next lecture).  Finally, we'll compare hash table performance with binary search trees, highlighting the strengths and weaknesses of each data structure.
+* The international banking system is vast and complex, comprising over 30,000 banks globally, managing trillions of dollars in assets. The top 10 banks alone hold approximately $25 trillion USD.
+* Despite its current complexity, banking originated from a fundamental need: simplifying trade and currency exchange.
 
-### Key Concepts
+**II. The Origins of Banking: From Benches to Business**
 
-* **Collision Handling:** When two or more keys hash to the same index in a hash table, a collision occurs. Two primary methods for resolving collisions are:
+* **11th Century Italy:**  The heart of European trade faced challenges with diverse currencies.  Merchants in Pisa, for instance, handled seven different coin types, requiring constant exchange.
+* **Banco (Bench):** The word "bank" derives from the Italian word "banco," referring to the outdoor benches where money changers conducted business.
+* **Challenges Driving Innovation:**  Issues like travel dangers, counterfeit currency, and difficulty securing loans spurred the development of new financial solutions.
+* **Emergence of Home Brokers:** These individuals provided credit to businessmen, laying the groundwork for modern lending practices.
+* **Genevese Merchants:**  Pioneers of cashless payment systems, further streamlining trade and finance.
+* **Expansion of Banking Networks:** Banks spread throughout Europe, extending credit to individuals, businesses, the Church, and even royalty.
 
-    * **Open Addressing (Linear Probing):**  If a collision occurs, the algorithm probes the next available slot in the hash table (using a linear increment). This continues until an empty slot is found.
+**III. Modern Banking: Risk Management and Economic Engine**
 
-    * **Chaining (Separate Chaining):** Each index in the hash table points to a linked list (or other data structure).  All keys hashing to the same index are stored in that list.
+* **Core Function: Risk Management**
+    * Banks accept deposits from savers and pay them interest.
+    * They lend these deposited funds at higher interest rates to borrowers.
+    * This involves calculated risk, acknowledging the possibility of loan defaults.
+* **Importance to the Economy:**  Banks provide crucial resources for individuals (e.g., mortgages for home purchases) and businesses (e.g., loans for expansion and investment).
+* **Other Revenue Streams:**
+    * Saving deposits
+    * Credit card services (transaction fees, interest)
+    * Currency trading (foreign exchange)
+    * Custodian services (safekeeping assets)
+    * Cash management services (for businesses)
 
-* **Load Factor (λ):**  A critical metric for hash table performance. It is defined as:
+**IV. The 2008 Financial Crisis: A Case Study in Systemic Risk**
 
-    λ = Number of elements in the hash table / Size of the hash table
+* **Shift from Traditional Role:** Many banks prioritized short-term, high-risk investments and complex financial instruments over traditional, long-term financial products. This pursuit of quick profits led to increased instability.
+* **Complex Financial Instruments:** The adoption of opaque and poorly understood financial products (e.g., mortgage-backed securities, collateralized debt obligations) and risky trading practices amplified the impact of the crisis.
+* **The Subprime Mortgage Crisis:** Banks like Lehman Brothers granted mortgages to borrowers with poor credit (subprime borrowers), contributing to a housing bubble.  When this bubble burst, defaults surged, triggering a chain reaction throughout the financial system.
+* **Global Impact:** The crisis led to plummeting stock prices, a global banking crisis, and one of the most severe economic downturns in modern history.
+* **Consequences:**
+    * Hundreds of billions of dollars in losses.
+    * Millions of job losses worldwide.
+    * Billions of dollars in fines levied against major banks.
+    * Significant erosion of public trust in the banking industry.
+    * Government bailouts of failing banks in the US and Europe.
+    * Implementation of new regulations (e.g., Dodd-Frank Act in the US), though some tougher measures were blocked by lobbying efforts.
 
-    * For open addressing, λ cannot exceed 1.
-    * For chaining, λ can be greater than 1.
+**V. Emerging Alternatives to Traditional Banking**
 
-* **Expected Number of Comparisons:** The average number of probes (or comparisons) needed to find an element (or determine its absence) in the hash table.  This is directly affected by the load factor.
-
-### Performance Analysis
-
-* **Open Addressing (Linear Probing):**
-
-    * As the load factor approaches 1, performance degrades significantly.  The expected number of comparisons approaches linear time (O(n)).
-    * An approximate formula for the expected number of comparisons for a successful search is:
-
-        (1 + 1 / (1 - λ)) / 2
-
-* **Chaining (Separate Chaining):**
-
-    * Performance is less sensitive to a high load factor compared to open addressing.
-    * The expected number of comparisons for a successful search is approximately:
-
-        1 + λ / 2
-
-    *  This assumes a uniform distribution of keys across the hash table indices.
-
-* **Comparison Table (Approximate Values):**
-
-| Load Factor (λ) | Open Addressing (Expected Comparisons) | Chaining (Expected Comparisons) |
-|---|---|---|
-| 0 | 1 | 1 |
-| 0.5 | 1.5 | 1.25 |
-| 0.75 | 2.5 | 1.375 |
-| 0.9 | 5.5 | 1.45 |
-| → 1 | → ∞ | → 1 + λ/2 |
-
-* **Comparison with Binary Search Trees:**
-
-    * Balanced binary search trees offer logarithmic time complexity (O(log n)) for search, insertion, and deletion.
-    * Hash tables with a good load factor can outperform binary search trees, especially for smaller datasets.  However, as the load factor increases in open addressing, hash table performance degrades.
-    * Binary search trees require more storage due to pointers/references for left and right children (and potentially a parent node).  Open addressing with linear probing is more space-efficient when the load factor is reasonable. Chaining requires additional space for the linked lists, impacting its space efficiency compared to open addressing.
-
-
-### Example and Exercise
-
-* **Scenario:**  Store 60,000 items and maintain an average of 2.5 comparisons per search.
-
-* **Open Addressing (Linear Probing):**
-
-    * To achieve 2.5 comparisons, the load factor should be approximately 0.75.
-    * Hash Table Size = 60,000 / 0.75 = 80,000
-
-* **Chaining (Separate Chaining):**
-
-    * To achieve 2.5 comparisons:
-
-        2.5 = 1 + λ / 2
-        λ = 3
-
-    * Hash Table Size = 60,000 / 3 = 20,000 (initial array size)
-
-* **Storage Comparison:** While chaining appears to require a smaller hash table, it actually uses more memory overall.
-
-    * **Open Addressing:** 80,000 references (approximately).
-    * **Chaining:**  20,000 references for the hash table + (60,000 * 2) = 120,000 references for the linked list elements (assuming singly linked lists, requiring one "next" pointer) = 140,000 total references.
+* **New Investment Banks:**  These institutions often charge annual fees instead of commissions on trades, aligning their incentives with client interests and promoting long-term financial planning.
+* **Credit Unions:** Cooperative, member-owned financial institutions focused on shared value and community benefit rather than maximizing profits.
+    * Offer similar services to traditional banks (loans, savings accounts, etc.).
+    * Democratically controlled by their members.
+    * Demonstrated greater resilience during the 2008 crisis due to their generally lower risk tolerance.
+* **Crowdfunding:** Connects individuals and businesses directly with investors, bypassing traditional banks.
+    * Platforms like Kickstarter and Indiegogo enable project funding and investment in new ventures.
+    * Distributes risk among a large pool of investors.
+* **Microcredits:** Small loans, primarily in developing countries, empowering individuals to start businesses and improve their economic standing.
+    * Addresses the needs of those traditionally excluded from the formal banking system.
+    * Has grown into a multi-billion dollar industry, demonstrating its potential for social and economic impact.
 
 
-### Summary
+**VI. The Future of Banking: A Question of Choice**
 
-* Load factor significantly impacts hash table performance.
-* Open addressing with linear probing is space-efficient but sensitive to high load factors.  Performance approaches linear time as λ approaches 1.
-* Chaining performs better at higher load factors but consumes more memory due to the linked lists.
-* Binary search trees offer consistent logarithmic time complexity but require more storage than open addressing.
-* The choice between open addressing and chaining depends on the specific application and the balance between performance and memory usage.  Open addressing is preferred when storage is a major concern.
+* The fundamental role of providing capital to individuals and businesses remains essential for a functioning economy.
+* The future landscape of banking is evolving rapidly, with alternative models gaining traction and challenging traditional paradigms.
+* Key Question:  Who will provide these vital financial services, and how will they be delivered in the future? This is a crucial societal decision requiring careful consideration and informed public discourse.
+
+**VII. Key Takeaways:**
+
+* Banking, despite its modern complexity, originated from the simple need to facilitate trade and manage currencies.
+* The core function of banks revolves around managing risk, accepting deposits, and providing loans.
+* The 2008 financial crisis underscored the dangers of excessive risk-taking and the critical need for robust regulation and oversight.
+* Alternative banking models like credit unions, crowdfunding, and microcredits are challenging traditional banking practices and offering new possibilities.
+* The future of banking remains uncertain, presenting both opportunities and challenges.  A stable and equitable financial system requires careful consideration, informed decision-making, and ongoing adaptation to evolving circumstances.
 
 
-### Key Takeaway
+**VIII. Further Research:**
 
-The size of the hash table and the collision handling technique are intertwined.  Careful consideration of the load factor and the expected number of comparisons is essential for designing an efficient hash table implementation. Rehashing is commonly employed to maintain a reasonable load factor and ensure constant time performance for open addressing.  When memory is at a premium, open addressing is a strong contender, but chaining offers more robust performance at the cost of increased storage requirements.
+* Investigate the history of banking in greater depth, exploring key events, figures, and institutions that shaped its development.
+* Conduct a detailed analysis of the 2008 financial crisis, examining the roles of various financial institutions, government policies, and regulatory failures.
+* Explore the diverse landscape of crowdfunding platforms, comparing their features, target audiences, and impact on different sectors.
+* Research the microfinance industry, focusing on its methodologies, impact on poverty alleviation, and challenges in ensuring sustainability.
+* Analyze the current regulatory environment for banks and discuss potential reforms to enhance stability, transparency, and consumer protection.  Consider the balance between promoting innovation and mitigating systemic risk.
