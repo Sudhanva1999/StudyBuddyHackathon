@@ -320,10 +320,10 @@ export default function ResultsPage() {
       <style jsx global>
         {tooltipStyles}
       </style>
-      <main className="m-4 py-8">
+      <main className="m-4">
         <ResizablePanelGroup
           direction="horizontal"
-          className="min-h-[800px] rounded-lg border"
+          className="h-[calc(100vh-5rem)] rounded-lg border"
         >
           {/* Video/PDF Panel */}
           <ResizablePanel defaultSize={60} minSize={30}>
@@ -333,11 +333,11 @@ export default function ResultsPage() {
                   {pdfViewerURL ? (
                     <iframe
                       src={pdfViewerURL}
-                      className="w-full h-[calc(100vh-12rem)]"
+                      className="w-full h-full"
                       title="PDF Viewer"
                     />
                   ) : (
-                    <div className="w-full h-[calc(100vh-12rem)] flex items-center justify-center text-muted-foreground">
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                       PDF not available
                     </div>
                   )}
@@ -424,13 +424,13 @@ export default function ResultsPage() {
 
           {/* Content Panel */}
           <ResizablePanel defaultSize={40} minSize={35}>
-            <div className="h-full p-4">
+            <div className="h-full">
               <Tabs
                 value={activeTab}
                 onValueChange={handleTabChange}
-                className="w-full"
+                className="h-full flex flex-col"
               >
-                <TabsList className="grid w-full grid-cols-6">
+                <TabsList className="grid w-full grid-cols-6 sticky top-0 z-10 bg-background">
                   <TabsTrigger
                     value="summary"
                     className="flex items-center justify-center tab-tooltip"
@@ -476,51 +476,57 @@ export default function ResultsPage() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="transcript" className="mt-4">
-                  <Card className="p-6 h-[800px] overflow-y-auto">
-                    <div className="prose dark:prose-invert max-w-none">
-                      <h3 className="text-xl font-semibold mb-4">Transcript</h3>
-                      <div className="whitespace-pre-line">
-                        {data?.transcript?.text || "Loading..."}
-                      </div>
-                    </div>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="summary" className="mt-4">
-                  <Card className="p-6 h-[800px] overflow-y-auto">
-                    <div className="prose dark:prose-invert max-w-none">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-semibold">
-                          Summary & Notes
+                <TabsContent value="transcript" className="flex-1 p-4">
+                  <Card className="h-[calc(100vh-11rem)] overflow-y-auto">
+                    <div className="p-6">
+                      <div className="prose dark:prose-invert max-w-none">
+                        <h3 className="text-xl font-semibold mb-4">
+                          Transcript
                         </h3>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={downloadPDF}
-                          className="flex items-center gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          <span>Download PDF</span>
-                        </Button>
-                      </div>
-                      <div id="lecture-notes-div" className="prose markdown">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {data?.notes || "Loading..."}
-                        </ReactMarkdown>
+                        <div className="whitespace-pre-line">
+                          {data?.transcript?.text || "Loading..."}
+                        </div>
                       </div>
                     </div>
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="chat" className="mt-4">
-                  <Card className="p-0 overflow-hidden h-[800px]">
+                <TabsContent value="summary" className="flex-1 p-4">
+                  <Card className="h-[calc(100vh-11rem)] overflow-y-auto">
+                    <div className="p-6">
+                      <div className="prose dark:prose-invert max-w-none">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-xl font-semibold">
+                            Summary & Notes
+                          </h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={downloadPDF}
+                            className="flex items-center gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span>Download PDF</span>
+                          </Button>
+                        </div>
+                        <div id="lecture-notes-div" className="prose markdown">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {data?.notes || "Loading..."}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="chat" className="flex-1 p-4">
+                  <Card className="h-[calc(100vh-11rem)] overflow-hidden">
                     <ChatInterface taskId={taskId || ""} />
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="flashcards" className="mt-4">
-                  <Card className="p-0 overflow-hidden h-[800px]">
+                <TabsContent value="flashcards" className="flex-1 p-4">
+                  <Card className="h-[calc(100vh-11rem)] overflow-y-auto">
                     {taskId ? (
                       <FlashCards key={flashcardsKey} taskId={taskId} />
                     ) : (
@@ -531,8 +537,8 @@ export default function ResultsPage() {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="mindmap" className="mt-4">
-                  <Card className="p-0 overflow-hidden h-[800px]">
+                <TabsContent value="mindmap" className="flex-1 p-4">
+                  <Card className="h-[calc(100vh-11rem)] overflow-y-auto">
                     {taskId ? (
                       <MindMap taskId={taskId} />
                     ) : (
@@ -543,8 +549,8 @@ export default function ResultsPage() {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="quiz" className="mt-4">
-                  <Card className="p-0 overflow-hidden h-[800px]">
+                <TabsContent value="quiz" className="flex-1 p-4">
+                  <Card className="h-[calc(100vh-11rem)] overflow-y-auto">
                     {taskId ? (
                       <Quiz taskId={taskId} />
                     ) : (
