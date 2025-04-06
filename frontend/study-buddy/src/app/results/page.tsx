@@ -104,6 +104,7 @@ export default function ResultsPage() {
   const [flashcardsKey, setFlashcardsKey] = useState(0);
   const [isPdf, setIsPdf] = useState(false);
   const [pdfViewerURL, setPdfViewerURL] = useState<string | null>(null);
+  const [pdfData, setPdfData] = useState<string | null>(null);
 
   console.log("ResultsPage rendered with taskId:", taskId);
 
@@ -180,43 +181,54 @@ export default function ResultsPage() {
 
   // load video file from IndexedDB
   useEffect(() => {
-    // Load the file from IndexedDB when the page reloads
     const loadFileFromDB = async () => {
       console.log("Results - Loading file from IndexedDB");
-      const db = await window.indexedDB.open("fileDB", 1);
-      db.onupgradeneeded = (event) => {
-        const target = event.target as IDBOpenDBRequest;
-        target.result.createObjectStore("files");
-      };
-      db.onsuccess = () => {
-        const transaction = db.result.transaction("files", "readonly");
-        const store = transaction.objectStore("files");
-        const request = store.get("uploadedFile");
-        request.onsuccess = () => {
-          if (request.result) {
-            const filename = localStorage.getItem("filename") || "video";
-            const fileType = localStorage.getItem("fileType") || "video";
-            console.log("Results - File info from IndexedDB:", {
-              filename,
-              fileType,
-              hasFile: !!request.result,
-            });
-            const newFile = new File([request.result], filename, {
-              type: fileType === "pdf" ? "application/pdf" : "video/mp4",
-            });
-            const fileURL = URL.createObjectURL(newFile);
-            setFileURL(fileURL);
-            console.log("Results - Created file URL:", fileURL);
-            // Store the URL in localStorage for PDF viewer
-            if (fileType === "pdf") {
-              localStorage.setItem("pdfURL", fileURL);
-              console.log("Results - Stored PDF URL in localStorage");
-            }
-          } else {
-            console.log("Results - No file found in IndexedDB");
-          }
+      try {
+        const db = await window.indexedDB.open("fileDB", 1);
+        db.onupgradeneeded = (event) => {
+          const target = event.target as IDBOpenDBRequest;
+          target.result.createObjectStore("files");
         };
-      };
+
+        db.onsuccess = () => {
+          const transaction = db.result.transaction("files", "readonly");
+          const store = transaction.objectStore("files");
+          const request = store.get("uploadedFile");
+
+          request.onsuccess = () => {
+            if (request.result) {
+              const filename = localStorage.getItem("filename") || "video";
+              const fileType = localStorage.getItem("fileType") || "video";
+
+              if (fileType === "pdf") {
+                // Convert the PDF file to base64
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  const base64Data = e.target?.result as string;
+                  // Create data URL for PDF
+                  const pdfDataUrl = `data:application/pdf;base64,${
+                    base64Data.split(",")[1]
+                  }`;
+                  setPdfViewerURL(pdfDataUrl);
+                  console.log("PDF data URL created successfully");
+                };
+                reader.readAsDataURL(request.result);
+              } else {
+                // Handle video files as before
+                const newFile = new File([request.result], filename, {
+                  type: "video/mp4",
+                });
+                const fileURL = URL.createObjectURL(newFile);
+                setFileURL(fileURL);
+              }
+            } else {
+              console.log("Results - No file found in IndexedDB");
+            }
+          };
+        };
+      } catch (error) {
+        console.error("Error loading file from IndexedDB:", error);
+      }
     };
 
     const youtubeUrl = localStorage.getItem("youtubeUrl");
@@ -329,16 +341,26 @@ export default function ResultsPage() {
           <ResizablePanel defaultSize={60} minSize={30}>
             <div className="h-full p-4 space-y-4">
               {isPdf ? (
-                <Card className="h-full overflow-hidden p-0">
+                <Card className="h-[calc(100vh-6rem)] overflow-hidden p-0">
                   {pdfViewerURL ? (
                     <iframe
                       src={pdfViewerURL}
                       className="w-full h-full"
                       title="PDF Viewer"
+                      style={{
+                        border: "none",
+                        height: "100%",
+                        minHeight: "calc(100vh - 6rem)",
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      PDF not available
+                      <div className="text-center">
+                        <p className="mb-2">PDF not available</p>
+                        <p className="text-sm text-muted-foreground">
+                          There was an error loading the PDF file.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </Card>
