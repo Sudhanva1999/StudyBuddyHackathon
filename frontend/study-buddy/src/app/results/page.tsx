@@ -94,7 +94,7 @@ export default function ResultsPage() {
   const filename = searchParams.get("filename") || "video";
   const [fileURL, setFileURL] = useState<string | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("transcript");
+  const [activeTab, setActiveTab] = useState("summary");
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -122,7 +122,7 @@ export default function ResultsPage() {
         setActiveTab("summary");
       }
       console.log("File type:", fileType, "isPdf:", fileType === "pdf");
-      
+
       // Get PDF viewer URL if it's a PDF
       if (fileType === "pdf") {
         const storedPdfURL = localStorage.getItem("pdfViewerURL");
@@ -142,8 +142,13 @@ export default function ResultsPage() {
       } else if (currentTaskId) {
         // If no data in localStorage, fetch from backend
         try {
-          console.log("Fetching results from backend for taskId:", currentTaskId);
-          const response = await fetch(`http://localhost:5001/status/${currentTaskId}`);
+          console.log(
+            "Fetching results from backend for taskId:",
+            currentTaskId
+          );
+          const response = await fetch(
+            `http://localhost:5001/status/${currentTaskId}`
+          );
           if (!response.ok) {
             throw new Error("Failed to fetch results");
           }
@@ -152,7 +157,10 @@ export default function ResultsPage() {
             console.log("Loaded results data from backend:", data.results);
             setData(data.results);
             // Store in localStorage for future use
-            localStorage.setItem("processingResults", JSON.stringify(data.results));
+            localStorage.setItem(
+              "processingResults",
+              JSON.stringify(data.results)
+            );
           } else {
             console.warn("No results available from backend");
             setData(null);
@@ -191,7 +199,7 @@ export default function ResultsPage() {
             console.log("Results - File info from IndexedDB:", {
               filename,
               fileType,
-              hasFile: !!request.result
+              hasFile: !!request.result,
             });
             const newFile = new File([request.result], filename, {
               type: fileType === "pdf" ? "application/pdf" : "video/mp4",
@@ -309,7 +317,9 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <style jsx global>{tooltipStyles}</style>
+      <style jsx global>
+        {tooltipStyles}
+      </style>
       <main className="m-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
@@ -382,7 +392,11 @@ export default function ResultsPage() {
                           {formatTime(currentTime)} / {formatTime(duration)}
                         </span>
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="icon" onClick={handleMute}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleMute}
+                          >
                             {isMuted ? (
                               <VolumeX className="h-5 w-5" />
                             ) : (
@@ -434,6 +448,13 @@ export default function ResultsPage() {
               >
                 <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger
+                    value="summary"
+                    className="flex items-center justify-center tab-tooltip"
+                    data-tooltip="Notes"
+                  >
+                    <ClipboardList className="h-5 w-5" />
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="transcript"
                     className="flex items-center justify-center tab-tooltip"
                     data-tooltip="Transcript"
@@ -442,14 +463,7 @@ export default function ResultsPage() {
                     <FileText className="h-5 w-5" />
                   </TabsTrigger>
                   <TabsTrigger
-                    value="summary"
-                    className="flex items-center justify-center tab-tooltip"
-                    data-tooltip="Notes"
-                  >
-                    <ClipboardList className="h-5 w-5" />
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="chat" 
+                    value="chat"
                     className="flex items-center justify-center tab-tooltip"
                     data-tooltip="Chat"
                   >
@@ -517,9 +531,7 @@ export default function ResultsPage() {
 
                 <TabsContent value="chat" className="mt-4">
                   <Card className="p-0 overflow-hidden h-[800px]">
-                    <ChatInterface
-                      taskId={taskId || ""}
-                    />
+                    <ChatInterface taskId={taskId || ""} />
                   </Card>
                 </TabsContent>
 
@@ -538,7 +550,7 @@ export default function ResultsPage() {
                 <TabsContent value="mindmap" className="mt-4">
                   <Card className="p-0 overflow-hidden h-[800px]">
                     {taskId ? (
-                        <MindMap taskId={taskId} />
+                      <MindMap taskId={taskId} />
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-500">
                         No mind map available
