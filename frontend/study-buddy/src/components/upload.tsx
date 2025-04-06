@@ -2549,6 +2549,7 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
   };
 
   const handleUpload = async (file: File) => {
+    localStorage.removeItem("youtubeUrl");
     try {
       setUploading(true);
       setError(null);
@@ -2633,6 +2634,7 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
       const data = await response.json();
 
       // Store the task ID for the processing page
+      localStorage.setItem("youtubeUrl", youtubeUrl);
       localStorage.setItem("taskId", data.task_id);
       localStorage.setItem("filename", "YouTube Video");
 
@@ -2644,9 +2646,13 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
       }
 
       // Navigate to processing page
-      router.push(`/processing?filename=${encodeURIComponent("YouTube Video")}`);
+      router.push(
+        `/processing?filename=${encodeURIComponent("YouTube Video")}`
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to process YouTube URL");
+      setError(
+        err instanceof Error ? err.message : "Failed to process YouTube URL"
+      );
       setUploading(false);
     } finally {
       setUploading(false);
@@ -2670,7 +2676,7 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
           <TabsTrigger value="file">Upload Video</TabsTrigger>
           <TabsTrigger value="url">YouTube URL</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="file">
           <div
             className={cn(
@@ -2683,7 +2689,9 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={() => !file && document.getElementById("file-upload")?.click()}
+            onClick={() =>
+              !file && document.getElementById("file-upload")?.click()
+            }
           >
             {!file ? (
               <div className="flex flex-col items-center justify-center space-y-4">
@@ -2746,7 +2754,9 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
                   </p>
                 </div>
               )}
-              {error && <p className="text-sm text-center text-red-500">{error}</p>}
+              {error && (
+                <p className="text-sm text-center text-red-500">{error}</p>
+              )}
               <Button
                 className="w-full"
                 onClick={() => handleUpload(file)}
@@ -2773,7 +2783,9 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
                   className="w-full"
                   disabled={uploading}
                 />
-                {error && <p className="text-sm text-center text-red-500">{error}</p>}
+                {error && (
+                  <p className="text-sm text-center text-red-500">{error}</p>
+                )}
                 {uploading && (
                   <div className="space-y-2">
                     <p className="text-sm text-center text-muted-foreground">

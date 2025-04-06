@@ -50,6 +50,7 @@ export default function ResultsPage() {
   const [data, setData] = useState<any>(null);
   const filename = searchParams.get("filename") || "video";
   const [fileURL, setFileURL] = useState<string | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("transcript");
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -117,7 +118,13 @@ export default function ResultsPage() {
         };
       };
     };
-    loadFileFromDB();
+
+    const youtubeUrl = localStorage.getItem("youtubeUrl");
+    if (youtubeUrl && youtubeUrl.length > 0) {
+      setYoutubeUrl(youtubeUrl);
+    } else {
+      loadFileFromDB();
+    }
   }, []);
 
   const handlePlayPause = () => {
@@ -180,6 +187,19 @@ export default function ResultsPage() {
     }
   };
 
+  const convertYoutubeUrlToEmbedUrl = (youtubeUrl: string) => {
+    const regex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([\w-]{11})/;
+    const match = youtubeUrl.match(regex);
+
+    if (match && match[1]) {
+      const videoId = match[1];
+      return `https://www.youtube.com/embed/${videoId}`;
+    } else {
+      throw new Error("Invalid YouTube URL");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="m-4 py-8">
@@ -203,7 +223,15 @@ export default function ResultsPage() {
           <ResizablePanel defaultSize={60} minSize={30}>
             <div className="h-full p-4 space-y-4">
               <div className="relative bg-black aspect-video rounded-md overflow-hidden">
-                {fileURL ? (
+                {youtubeUrl ? (
+                  <>
+                    <iframe
+                      className="w-full h-full"
+                      src={convertYoutubeUrlToEmbedUrl(youtubeUrl)}
+                      title="YouTube video player"
+                    ></iframe>
+                  </>
+                ) : fileURL ? (
                   <video
                     ref={videoRef}
                     className="w-full h-full"
@@ -219,42 +247,44 @@ export default function ResultsPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" onClick={handleMute}>
-                      {isMuted ? (
-                        <VolumeX className="h-5 w-5" />
-                      ) : (
-                        <Volume2 className="h-5 w-5" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handlePlayPause}
-                    >
-                      {isPlaying ? (
-                        <Pause className="h-5 w-5" />
-                      ) : (
-                        <Play className="h-5 w-5" />
-                      )}
-                    </Button>
+              {youtubeUrl === null && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="ghost" size="icon" onClick={handleMute}>
+                        {isMuted ? (
+                          <VolumeX className="h-5 w-5" />
+                        ) : (
+                          <Volume2 className="h-5 w-5" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePlayPause}
+                      >
+                        {isPlaying ? (
+                          <Pause className="h-5 w-5" />
+                        ) : (
+                          <Play className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                </div>
 
-                <input
-                  type="range"
-                  min="0"
-                  max={duration || 100}
-                  value={currentTime}
-                  onChange={handleSeek}
-                  className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer"
-                />
-              </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max={duration || 100}
+                    value={currentTime}
+                    onChange={handleSeek}
+                    className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer"
+                  />
+                </div>
+              )}
             </div>
           </ResizablePanel>
 
