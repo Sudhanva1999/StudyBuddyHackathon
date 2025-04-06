@@ -125,3 +125,9 @@
 .markdown > * {
   all: revert;
 }
+
+@media (width >= 80rem) {
+  .custom-container {
+    max-width: 88rem !important;
+  }
+}

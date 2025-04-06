@@ -321,22 +321,6 @@ export default function ResultsPage() {
         {tooltipStyles}
       </style>
       <main className="m-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            <h2 className="text-3xl font-bold">
-              {isPdf ? "PDF Document" : filename}
-            </h2>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => (window.location.href = "/")}
-            >
-              New Upload
-            </Button>
-          </div>
-        </div>
-
         <ResizablePanelGroup
           direction="horizontal"
           className="min-h-[800px] rounded-lg border"
