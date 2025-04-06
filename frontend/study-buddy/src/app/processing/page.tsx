@@ -11,20 +11,40 @@ export default function ProcessingPage() {
   const searchParams = useSearchParams();
   const filename = searchParams.get("filename") || "video";
   const taskId = localStorage.getItem("taskId");
+  const fileType = localStorage.getItem("fileType") || "video";
 
   const [status, setStatus] = useState("uploaded");
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
 
-  const steps = [
+  // Define steps based on file type
+  const videoSteps = [
     { id: "uploaded", name: "File uploaded" },
     { id: "converting", name: "Converting video to audio" },
-    { id: "extracting", name: "Extracting text from PDF" },
     { id: "transcribing", name: "Generating transcript" },
     { id: "summarizing", name: "Creating summary" },
     { id: "generating_notes", name: "Generating notes" },
     { id: "completed", name: "Processing complete" },
   ];
+
+  const pdfSteps = [
+    { id: "uploaded", name: "File uploaded" },
+    { id: "extracting", name: "Extracting text from PDF" },
+    { id: "summarizing", name: "Creating summary" },
+    { id: "generating_notes", name: "Generating notes" },
+    { id: "completed", name: "Processing complete" },
+  ];
+
+  const youtubeSteps = [
+    { id: "uploaded", name: "File uploaded" },
+    { id: "transcribing", name: "Generating transcript" },
+    { id: "summarizing", name: "Creating summary" },
+    { id: "generating_notes", name: "Generating notes" },
+    { id: "completed", name: "Processing complete" },
+  ];
+
+  // Select the appropriate steps based on file type
+  const steps = fileType === "pdf" ? pdfSteps : (fileType === "youtube" ? youtubeSteps : videoSteps);
 
   const getCurrentStep = () => {
     return steps.findIndex((step) => step.id === status);
