@@ -37,7 +37,7 @@ StudyBuddy was born from the challenges students face in effectively processing 
 ## 🏗️ Architecture
 
 <div align="center">
-  <img src="./documents/architecture.png" alt="StudyBuddy Architecture" width="100%"/>
+  <img src="./study-buddy-architecture.jpeg" alt="StudyBuddy Architecture" width="100%"/>
 </div>
 
 ## 🚀 Tech Stack
