@@ -25,85 +25,6 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
   const [youtubeUrl, setYoutubeUrl] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>("file");
 
-  const uploadVideo = async () => {
-    localStorage.removeItem("uploadResponse");
-    if (!file) {
-      setError("Please select a video file.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("video", file);
-
-    try {
-      setUploadStatus("Uploading video...");
-      const response = await fetch("http://localhost:5001/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const uploadResponse = await response.json();
-        localStorage.setItem("uploadResponse", JSON.stringify(uploadResponse));
-        setUploadStatus("Upload successful! Processing video...");
-
-        // Save file to IndexedDB
-        const db = await window.indexedDB.open("fileDB", 1);
-        db.onsuccess = () => {
-          const transaction = db.result.transaction("files", "readwrite");
-          const store = transaction.objectStore("files");
-          store.put(file, "uploadedFile");
-        };
-
-        const fileURL = URL.createObjectURL(file);
-        localStorage.setItem("fileURL", fileURL);
-        router.push(`/processing?filename=${encodeURIComponent(file.name)}`);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || "Upload failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setError("Error uploading file. Please try again.");
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile?.type.startsWith("video/")) {
-      setFile(droppedFile);
-      setError(null);
-    } else {
-      setError("Please upload a video file.");
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setError(null);
-    }
-  };
-
-  const removeFile = () => {
-    setFile(null);
-    setError(null);
-    setUploadStatus("");
-  };
-
   const handleUpload = async (file: File) => {
     localStorage.removeItem("youtubeUrl");
     try {
@@ -111,9 +32,15 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
       setError(null);
 
       const formData = new FormData();
-      formData.append("video", file);
+      // Determine if it's a PDF or video based on file type
+      if (file.type === "application/pdf") {
+        formData.append("pdf", file);
+      } else {
+        formData.append("video", file);
+      }
 
-      const response = await fetch("http://localhost:5001/upload", {
+      const endpoint = file.type === "application/pdf" ? "/upload-pdf" : "/upload";
+      const response = await fetch(`http://localhost:5001${endpoint}`, {
         method: "POST",
         body: formData,
       });
@@ -135,8 +62,17 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
       // Store the task ID and filename for the processing page
       localStorage.setItem("taskId", data.task_id);
       localStorage.setItem("filename", file.name);
+      
+      // Set fileType based on the active tab and file type
+      if (activeTab === "pdf" || file.type === "application/pdf") {
+        localStorage.setItem("fileType", "pdf");
+        console.log("Setting fileType to pdf");
+      } else {
+        localStorage.setItem("fileType", "video");
+        console.log("Setting fileType to video");
+      }
 
-      // Create a URL for the video file
+      // Create a URL for the file
       const fileURL = URL.createObjectURL(file);
       localStorage.setItem("fileURL", fileURL);
 
@@ -155,6 +91,46 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile?.type.startsWith("video/") || droppedFile?.type === "application/pdf") {
+      setFile(droppedFile);
+      setError(null);
+    } else {
+      setError("Please upload a video or PDF file.");
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      if (selectedFile.type.startsWith("video/") || selectedFile.type === "application/pdf") {
+        setFile(selectedFile);
+        setError(null);
+      } else {
+        setError("Please select a video or PDF file.");
+      }
+    }
+  };
+
+  const removeFile = () => {
+    setFile(null);
+    setError(null);
+    setUploadStatus("");
   };
 
   const handleYoutubeUrlSubmit = async () => {
@@ -193,6 +169,8 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
       localStorage.setItem("youtubeUrl", youtubeUrl);
       localStorage.setItem("taskId", data.task_id);
       localStorage.setItem("filename", "YouTube Video");
+      localStorage.setItem("fileType", "video");
+      console.log("Setting fileType to video for YouTube URL");
 
       if (data.task_id) {
         setTaskId(data.task_id);
@@ -228,8 +206,9 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="file" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="file">Upload Video</TabsTrigger>
+          <TabsTrigger value="pdf">Upload PDF</TabsTrigger>
           <TabsTrigger value="url">YouTube URL</TabsTrigger>
         </TabsList>
 
@@ -266,6 +245,97 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
                   id="file-upload"
                   type="file"
                   accept="video/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="rounded-full bg-primary/10 p-3">
+                    <File className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium truncate max-w-[200px] sm:max-w-[300px]">
+                      {file.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile();
+                  }}
+                  disabled={uploading}
+                >
+                  <X className="h-5 w-5" />
+                  <span className="sr-only">Remove file</span>
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {file && (
+            <div className="space-y-4">
+              {uploading && (
+                <div className="space-y-2">
+                  <p className="text-sm text-center text-muted-foreground">
+                    {uploadStatus}
+                  </p>
+                </div>
+              )}
+              {error && (
+                <p className="text-sm text-center text-red-500">{error}</p>
+              )}
+              <Button
+                className="w-full"
+                onClick={() => handleUpload(file)}
+                disabled={uploading}
+              >
+                {uploading ? "Processing..." : "Upload and Process"}
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="pdf">
+          <div
+            className={cn(
+              "border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors",
+              isDragging
+                ? "border-primary bg-primary/5"
+                : "border-muted-foreground/25",
+              file ? "bg-muted/50" : "hover:bg-muted/50"
+            )}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() =>
+              !file && document.getElementById("pdf-upload")?.click()
+            }
+          >
+            {!file ? (
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <UploadIcon className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <p className="text-lg font-medium">
+                    Drag and drop your PDF here
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Or click to browse files
+                  </p>
+                </div>
+                <input
+                  id="pdf-upload"
+                  type="file"
+                  accept="application/pdf"
                   className="hidden"
                   onChange={handleFileChange}
                 />

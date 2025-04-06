@@ -20,6 +20,7 @@ from youtube_processor import process_youtube_video
 import re
 from youtube_transcript_api import YouTubeTranscriptApi
 from urllib.parse import urlparse, parse_qs
+from PyPDF2 import PdfReader
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -329,6 +330,66 @@ def process_youtube_video(task_id, url):
         processing_tasks[task_id]["status"] = "error"
         processing_tasks[task_id]["error"] = str(e)
 
+def process_pdf(task_id, pdf_path):
+    """Process PDF in background thread"""
+    try:
+        # Extract PDF name from the path
+        pdf_name = os.path.basename(pdf_path).split('_', 1)[1] if '_' in os.path.basename(pdf_path) else os.path.basename(pdf_path)
+        
+        processing_tasks[task_id]["status"] = "extracting"
+        # Extract text from PDF
+        reader = PdfReader(pdf_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+        
+        if not text.strip():
+            processing_tasks[task_id]["status"] = "error"
+            processing_tasks[task_id]["error"] = "No text could be extracted from PDF"
+            return
+        
+        # Generate summary
+        processing_tasks[task_id]["status"] = "summarizing"
+        summary = generate_notes(f'Please provide a concise summary of the following text:\n{text}')
+        
+        processing_tasks[task_id]["status"] = "generating_notes"
+        # Generate notes
+        try:
+            notes = generate_notes(f'Summary: {summary} \n\n\nNotes:\n{text}')
+        except Exception as notes_error:
+            logger.error(f"Error generating notes: {str(notes_error)}", exc_info=True)
+            notes = f"Error generating notes: {str(notes_error)}"
+            
+        # Store results without generating flashcards
+        results = {
+            "transcript": {
+                "text": text,
+                "confidence": 1.0  # PDF text extraction is deterministic
+            },
+            "summary": summary,
+            "notes": notes,
+            "flashcards": []  # Initialize with empty flashcards array
+        }
+        
+        # Save results to cache
+        save_to_cache(pdf_name, results)
+        
+        processing_tasks[task_id]["status"] = "completed"
+        processing_tasks[task_id]["results"] = results
+        logger.info(f"Task {task_id} completed. PDF processed but flashcards not generated yet.")
+        
+        # Clean up temporary files
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+            
+    except Exception as e:
+        logger.error(f"Error during processing: {str(e)}", exc_info=True)
+        processing_tasks[task_id]["status"] = "error"
+        processing_tasks[task_id]["error"] = str(e)
+        # Clean up temporary files in case of error
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+
 @app.route("/health", methods=["GET"])
 def health_check():
     """Health check endpoint to verify server status."""
@@ -400,6 +461,78 @@ def upload_video():
         thread = threading.Thread(
             target=process_video,
             args=(task_id, video_path, audio_output)
+        )
+        thread.start()
+        
+        return jsonify({
+            "message": "File uploaded successfully",
+            "task_id": task_id,
+            "status": "uploaded"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+
+@app.route("/upload-pdf", methods=["POST"])
+def upload_pdf():
+    """Handles PDF upload and initiates processing."""
+    try:
+        logger.info("Starting PDF upload process")
+        
+        if "pdf" not in request.files:
+            logger.error("No PDF file in request")
+            return jsonify({"error": "No file uploaded"}), 400
+
+        file = request.files["pdf"]
+        if file.filename == "":
+            logger.error("Empty filename received")
+            return jsonify({"error": "No file selected"}), 400
+            
+        if not file.filename.lower().endswith('.pdf'):
+            logger.error("Invalid file type")
+            return jsonify({"error": "Please upload a PDF file"}), 400
+
+        # Generate unique task ID
+        task_id = str(uuid.uuid4())
+        
+        # Check if this PDF is already in the cache
+        cached_results = get_cached_results(file.filename)
+        if cached_results:
+            logger.info(f"PDF {file.filename} found in cache, returning cached results")
+            
+            # Initialize task status with cached results
+            processing_tasks[task_id] = {
+                "status": "completed",
+                "filename": file.filename,
+                "results": cached_results,
+                "cached": True
+            }
+            
+            return jsonify({
+                "message": "File found in cache",
+                "task_id": task_id,
+                "status": "completed",
+                "cached": True
+            }), 200
+
+        logger.info(f"Processing file: {file.filename}")
+        pdf_path = os.path.join(UPLOAD_FOLDER, f"{task_id}_{file.filename}")
+
+        # Save PDF file
+        logger.info("Saving PDF file")
+        file.save(pdf_path)
+        
+        # Initialize task status
+        processing_tasks[task_id] = {
+            "status": "uploaded",
+            "filename": file.filename
+        }
+        
+        # Start processing in background thread
+        thread = threading.Thread(
+            target=process_pdf,
+            args=(task_id, pdf_path)
         )
         thread.start()
         

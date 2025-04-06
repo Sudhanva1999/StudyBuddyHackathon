@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 export default function ProcessingPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function ProcessingPage() {
   const steps = [
     { id: "uploaded", name: "File uploaded" },
     { id: "converting", name: "Converting video to audio" },
+    { id: "extracting", name: "Extracting text from PDF" },
     { id: "transcribing", name: "Generating transcript" },
     { id: "summarizing", name: "Creating summary" },
     { id: "generating_notes", name: "Generating notes" },
@@ -28,79 +30,49 @@ export default function ProcessingPage() {
     return steps.findIndex((step) => step.id === status);
   };
 
-  useEffect(() => {
+  const getProgress = () => {
+    const currentStep = getCurrentStep();
+    return ((currentStep + 1) / steps.length) * 100;
+  };
+
+  const checkStatus = async () => {
     if (!taskId) {
-      console.error("No taskId found in localStorage");
-      router.push("/");
+      setError("No task ID found");
       return;
     }
 
-    console.log("Starting status polling for taskId:", taskId);
-
-    const pollStatus = async () => {
-      try {
-        console.log("Polling status for taskId:", taskId);
-        const response = await fetch(`http://localhost:5001/status/${taskId}`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Status fetch failed:", response.status, errorText);
-          throw new Error(`Failed to fetch status: ${response.status} ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log("Received status data:", data);
-        
-        setStatus(data.status);
-
-        if (data.status === "completed") {
-          console.log("Processing completed, results:", data.results);
-          if (!data.results) {
-            console.error("No results found in completed response");
-            setError("Processing completed but no results were returned");
-            return;
-          }
-          setResults(data.results);
-          // Store results in localStorage for the results page
-          try {
-            localStorage.setItem("processingResults", JSON.stringify(data.results));
-            console.log("Results stored in localStorage");
-            
-            // Verify the data was stored correctly
-            const storedData = localStorage.getItem("processingResults");
-            if (!storedData) {
-              throw new Error("Failed to store results in localStorage");
-            }
-            
-            // Navigate to results page after a short delay
-            setTimeout(() => {
-              router.push(`/results?filename=${encodeURIComponent(filename)}`);
-            }, 1500);
-          } catch (error) {
-            console.error("Error storing results:", error);
-            setError("Failed to store processing results");
-          }
-        } else if (data.status === "error") {
-          console.error("Processing error:", data.error);
-          setError(data.error || "An error occurred during processing");
-        }
-      } catch (err) {
-        console.error("Error during status polling:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch status");
+    try {
+      const response = await fetch(`http://localhost:5001/status/${taskId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch status");
       }
-    };
 
-    // Poll every 2 seconds
-    const interval = setInterval(pollStatus, 2000);
+      const data = await response.json();
+      setStatus(data.status);
 
-    // Initial poll
-    pollStatus();
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
 
-    return () => {
-      console.log("Cleaning up polling interval");
-      clearInterval(interval);
-    };
-  }, [taskId, filename, router]);
+      if (data.status === "completed") {
+        setResults(data.results);
+        // Store results in localStorage
+        localStorage.setItem("processingResults", JSON.stringify(data.results));
+        // Navigate to results page after a short delay
+        setTimeout(() => {
+          router.push("/results");
+        }, 1000);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch status");
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(checkStatus, 2000);
+    return () => clearInterval(interval);
+  }, [taskId]);
 
   if (error) {
     return (
@@ -125,79 +97,38 @@ export default function ProcessingPage() {
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="max-w-md w-full p-6 space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">Processing Your Video</h1>
+          <h1 className="text-2xl font-bold">Processing Your File</h1>
           <p className="text-muted-foreground">
             Please wait while we process &quot;{filename}&quot;
           </p>
         </div>
 
-        <div className="space-y-8 mt-8">
-          {steps.map((step, index) => {
-            const currentStepIndex = getCurrentStep();
-            const isCompleted = currentStepIndex > index;
-            const isCurrent = currentStepIndex === index;
-
-            return (
-              <div key={step.id} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`rounded-full p-2 ${
-                        isCompleted
-                          ? "bg-primary/20 text-primary"
-                          : isCurrent
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      ) : isCurrent ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <span className="h-4 w-4 flex items-center justify-center text-xs">
-                          {index + 1}
-                        </span>
-                      )}
-                    </div>
-                    <span
-                      className={
-                        currentStepIndex >= index
-                          ? "font-medium"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {step.name}
-                    </span>
-                  </div>
-                  {isCompleted && (
-                    <span className="text-sm text-primary">Completed</span>
+        <div className="space-y-4">
+          <Progress value={getProgress()} className="w-full" />
+          <div className="space-y-2">
+            {steps.map((step, index) => {
+              const isCompleted = index < getCurrentStep();
+              const isCurrent = index === getCurrentStep();
+              return (
+                <div
+                  key={step.id}
+                  className={cn(
+                    "flex items-center space-x-2",
+                    isCompleted ? "text-primary" : "text-muted-foreground"
                   )}
+                >
+                  {isCompleted ? (
+                    <Check className="h-4 w-4 text-primary" />
+                  ) : isCurrent ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <div className="h-4 w-4" />
+                  )}
+                  <span>{step.name}</span>
                 </div>
-
-                {isCurrent && (
-                  <div className="space-y-1">
-                    <Progress value={100} className="h-2" />
-                    <p className="text-xs text-right text-muted-foreground">
-                      Processing...
-                    </p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

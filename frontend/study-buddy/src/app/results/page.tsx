@@ -93,34 +93,55 @@ export default function ResultsPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const taskId = localStorage.getItem("taskId");
   const [flashcardsKey, setFlashcardsKey] = useState(0);
+  const [isPdf, setIsPdf] = useState(false);
 
   console.log("ResultsPage rendered with taskId:", taskId);
 
-  // load transcript and summary data from localStorage
+  // load transcript and summary data from localStorage or backend
   useEffect(() => {
-    const fetchData = () => {
-      console.log("Fetching results data from localStorage");
+    const fetchData = async () => {
+      console.log("Fetching results data");
       const storedData = localStorage.getItem("processingResults");
+      const currentTaskId = localStorage.getItem("taskId");
+      const fileType = localStorage.getItem("fileType");
+
+      // Set isPdf based on fileType
+      setIsPdf(fileType === "pdf");
+      console.log("File type:", fileType, "isPdf:", fileType === "pdf");
+
       if (storedData) {
         try {
           const parsedData = JSON.parse(storedData);
-          console.log("Loaded results data:", parsedData);
-          console.log("Results data keys:", Object.keys(parsedData));
-          if (parsedData.flashcards) {
-            console.log(
-              "Flashcards in results data:",
-              parsedData.flashcards.length
-            );
-          } else {
-            console.warn("No flashcards in results data");
-          }
+          console.log("Loaded results data from localStorage:", parsedData);
           setData(parsedData);
         } catch (error) {
           console.error("Error parsing stored data:", error);
           setData(null);
         }
+      } else if (currentTaskId) {
+        // If no data in localStorage, fetch from backend
+        try {
+          console.log("Fetching results from backend for taskId:", currentTaskId);
+          const response = await fetch(`http://localhost:5001/status/${currentTaskId}`);
+          if (!response.ok) {
+            throw new Error("Failed to fetch results");
+          }
+          const data = await response.json();
+          if (data.status === "completed" && data.results) {
+            console.log("Loaded results data from backend:", data.results);
+            setData(data.results);
+            // Store in localStorage for future use
+            localStorage.setItem("processingResults", JSON.stringify(data.results));
+          } else {
+            console.warn("No results available from backend");
+            setData(null);
+          }
+        } catch (error) {
+          console.error("Error fetching from backend:", error);
+          setData(null);
+        }
       } else {
-        console.warn("No results data found in localStorage");
+        console.warn("No taskId found and no results in localStorage");
         setData(null);
       }
     };
@@ -144,8 +165,9 @@ export default function ResultsPage() {
         request.onsuccess = () => {
           if (request.result) {
             const filename = localStorage.getItem("filename") || "video";
+            const fileType = localStorage.getItem("fileType") || "video";
             const newFile = new File([request.result], filename, {
-              type: "video/mp4",
+              type: fileType === "pdf" ? "application/pdf" : "video/mp4",
             });
             setFileURL(URL.createObjectURL(newFile));
           }
@@ -239,7 +261,9 @@ export default function ResultsPage() {
       <style jsx global>{tooltipStyles}</style>
       <main className="m-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">{filename}</h2>
+          <h2 className="text-3xl font-bold">
+            {isPdf ? "PDF Document" : filename}
+          </h2>
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
@@ -254,71 +278,84 @@ export default function ResultsPage() {
           direction="horizontal"
           className="min-h-[800px] rounded-lg border"
         >
-          {/* Video Panel */}
+          {/* Video/PDF Panel */}
           <ResizablePanel defaultSize={60} minSize={30}>
             <div className="h-full p-4 space-y-4">
-              <div className="relative bg-black aspect-video rounded-md overflow-hidden">
-                {youtubeUrl ? (
-                  <>
-                    <iframe
-                      className="w-full h-full"
-                      src={convertYoutubeUrlToEmbedUrl(youtubeUrl)}
-                      title="YouTube video player"
-                    ></iframe>
-                  </>
-                ) : fileURL ? (
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full"
-                    src={fileURL.length > 0 ? fileURL : "/placeholder.mp4"}
-                    poster="/placeholder.svg?height=720&width=1280"
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleLoadedMetadata}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                    Video not available
-                  </div>
-                )}
-              </div>
-
-              {youtubeUrl === null && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      {formatTime(currentTime)} / {formatTime(duration)}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="icon" onClick={handleMute}>
-                        {isMuted ? (
-                          <VolumeX className="h-5 w-5" />
-                        ) : (
-                          <Volume2 className="h-5 w-5" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handlePlayPause}
-                      >
-                        {isPlaying ? (
-                          <Pause className="h-5 w-5" />
-                        ) : (
-                          <Play className="h-5 w-5" />
-                        )}
-                      </Button>
+              {isPdf ? (
+                <Card className="h-full overflow-y-auto p-6">
+                  <div className="prose dark:prose-invert max-w-none">
+                    <h3 className="text-xl font-semibold mb-4">PDF Content</h3>
+                    <div className="whitespace-pre-line">
+                      {data?.transcript?.text || "Loading..."}
                     </div>
                   </div>
+                </Card>
+              ) : (
+                <>
+                  <div className="relative bg-black aspect-video rounded-md overflow-hidden">
+                    {youtubeUrl ? (
+                      <>
+                        <iframe
+                          className="w-full h-full"
+                          src={convertYoutubeUrlToEmbedUrl(youtubeUrl)}
+                          title="YouTube video player"
+                        ></iframe>
+                      </>
+                    ) : fileURL ? (
+                      <video
+                        ref={videoRef}
+                        className="w-full h-full"
+                        src={fileURL.length > 0 ? fileURL : "/placeholder.mp4"}
+                        poster="/placeholder.svg?height=720&width=1280"
+                        onTimeUpdate={handleTimeUpdate}
+                        onLoadedMetadata={handleLoadedMetadata}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        Video not available
+                      </div>
+                    )}
+                  </div>
 
-                  <input
-                    type="range"
-                    min="0"
-                    max={duration || 100}
-                    value={currentTime}
-                    onChange={handleSeek}
-                    className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer"
-                  />
-                </div>
+                  {youtubeUrl === null && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          {formatTime(currentTime)} / {formatTime(duration)}
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <Button variant="ghost" size="icon" onClick={handleMute}>
+                            {isMuted ? (
+                              <VolumeX className="h-5 w-5" />
+                            ) : (
+                              <Volume2 className="h-5 w-5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handlePlayPause}
+                          >
+                            {isPlaying ? (
+                              <Pause className="h-5 w-5" />
+                            ) : (
+                              <Play className="h-5 w-5" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <input
+                        type="range"
+                        min="0"
+                        max={duration || 100}
+                        value={currentTime}
+                        onChange={handleSeek}
+                        className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer"
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </ResizablePanel>
