@@ -59,6 +59,13 @@ export default function ProcessingPage() {
         setResults(data.results);
         // Store results in localStorage
         localStorage.setItem("processingResults", JSON.stringify(data.results));
+        
+        // Check if we have a PDF viewer URL and preserve it
+        const pdfViewerURL = localStorage.getItem("pdfViewerURL");
+        if (pdfViewerURL) {
+          console.log("Processing - Preserving PDF viewer URL:", pdfViewerURL);
+        }
+        
         // Navigate to results page after a short delay
         setTimeout(() => {
           router.push("/results");

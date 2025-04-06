@@ -64,17 +64,25 @@ export function Upload({ onTaskIdUpdate }: UploadProps) {
       localStorage.setItem("filename", file.name);
       
       // Set fileType based on the active tab and file type
-      if (activeTab === "pdf" || file.type === "application/pdf") {
-        localStorage.setItem("fileType", "pdf");
-        console.log("Setting fileType to pdf");
-      } else {
-        localStorage.setItem("fileType", "video");
-        console.log("Setting fileType to video");
-      }
+      const fileType = activeTab === "pdf" || file.type === "application/pdf" ? "pdf" : "video";
+      localStorage.setItem("fileType", fileType);
+      console.log("Upload - File type detection:", {
+        activeTab,
+        fileType: file.type,
+        storedFileType: fileType
+      });
 
       // Create a URL for the file
       const fileURL = URL.createObjectURL(file);
       localStorage.setItem("fileURL", fileURL);
+      
+      // For PDFs, store the URL in a separate key for the PDF viewer
+      if (fileType === "pdf") {
+        localStorage.setItem("pdfViewerURL", fileURL);
+        console.log("Upload - Stored PDF viewer URL:", fileURL);
+      }
+      
+      console.log("Upload - Created file URL:", fileURL);
 
       if (data.task_id) {
         setTaskId(data.task_id);

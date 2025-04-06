@@ -94,6 +94,7 @@ export default function ResultsPage() {
   const taskId = localStorage.getItem("taskId");
   const [flashcardsKey, setFlashcardsKey] = useState(0);
   const [isPdf, setIsPdf] = useState(false);
+  const [pdfViewerURL, setPdfViewerURL] = useState<string | null>(null);
 
   console.log("ResultsPage rendered with taskId:", taskId);
 
@@ -107,7 +108,18 @@ export default function ResultsPage() {
 
       // Set isPdf based on fileType
       setIsPdf(fileType === "pdf");
+      // Set default tab to summary if it's a PDF
+      if (fileType === "pdf") {
+        setActiveTab("summary");
+      }
       console.log("File type:", fileType, "isPdf:", fileType === "pdf");
+      
+      // Get PDF viewer URL if it's a PDF
+      if (fileType === "pdf") {
+        const storedPdfURL = localStorage.getItem("pdfViewerURL");
+        console.log("Retrieved PDF viewer URL:", storedPdfURL);
+        setPdfViewerURL(storedPdfURL);
+      }
 
       if (storedData) {
         try {
@@ -153,6 +165,7 @@ export default function ResultsPage() {
   useEffect(() => {
     // Load the file from IndexedDB when the page reloads
     const loadFileFromDB = async () => {
+      console.log("Results - Loading file from IndexedDB");
       const db = await window.indexedDB.open("fileDB", 1);
       db.onupgradeneeded = (event) => {
         const target = event.target as IDBOpenDBRequest;
@@ -166,10 +179,24 @@ export default function ResultsPage() {
           if (request.result) {
             const filename = localStorage.getItem("filename") || "video";
             const fileType = localStorage.getItem("fileType") || "video";
+            console.log("Results - File info from IndexedDB:", {
+              filename,
+              fileType,
+              hasFile: !!request.result
+            });
             const newFile = new File([request.result], filename, {
               type: fileType === "pdf" ? "application/pdf" : "video/mp4",
             });
-            setFileURL(URL.createObjectURL(newFile));
+            const fileURL = URL.createObjectURL(newFile);
+            setFileURL(fileURL);
+            console.log("Results - Created file URL:", fileURL);
+            // Store the URL in localStorage for PDF viewer
+            if (fileType === "pdf") {
+              localStorage.setItem("pdfURL", fileURL);
+              console.log("Results - Stored PDF URL in localStorage");
+            }
+          } else {
+            console.log("Results - No file found in IndexedDB");
           }
         };
       };
@@ -182,6 +209,21 @@ export default function ResultsPage() {
       loadFileFromDB();
     }
   }, []);
+
+  // Clean up URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      console.log("Results - Cleaning up URLs");
+      if (fileURL) {
+        URL.revokeObjectURL(fileURL);
+        console.log("Results - Revoked file URL");
+      }
+      if (pdfViewerURL) {
+        URL.revokeObjectURL(pdfViewerURL);
+        console.log("Results - Revoked PDF viewer URL");
+      }
+    };
+  }, [fileURL, pdfViewerURL]);
 
   const handlePlayPause = () => {
     if (videoRef.current) {
@@ -282,13 +324,18 @@ export default function ResultsPage() {
           <ResizablePanel defaultSize={60} minSize={30}>
             <div className="h-full p-4 space-y-4">
               {isPdf ? (
-                <Card className="h-full overflow-y-auto p-6">
-                  <div className="prose dark:prose-invert max-w-none">
-                    <h3 className="text-xl font-semibold mb-4">PDF Content</h3>
-                    <div className="whitespace-pre-line">
-                      {data?.transcript?.text || "Loading..."}
+                <Card className="h-full overflow-hidden p-0">
+                  {pdfViewerURL ? (
+                    <iframe
+                      src={pdfViewerURL}
+                      className="w-full h-[calc(100vh-12rem)]"
+                      title="PDF Viewer"
+                    />
+                  ) : (
+                    <div className="w-full h-[calc(100vh-12rem)] flex items-center justify-center text-muted-foreground">
+                      PDF not available
                     </div>
-                  </div>
+                  )}
                 </Card>
               ) : (
                 <>
@@ -379,6 +426,7 @@ export default function ResultsPage() {
                     value="transcript"
                     className="flex items-center justify-center tab-tooltip"
                     data-tooltip="Transcript"
+                    disabled={isPdf}
                   >
                     <FileText className="h-5 w-5" />
                   </TabsTrigger>
