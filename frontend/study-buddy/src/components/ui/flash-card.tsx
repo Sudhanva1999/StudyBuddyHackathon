@@ -22,18 +22,20 @@ export function FlashCard({ question, answer }: FlashCardProps) {
       >
         {/* Front of card */}
         <div
-          className="absolute w-full h-full backface-hidden rounded-xl shadow-lg p-6 flex items-center justify-center text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
+          className="absolute w-full h-full backface-hidden bg-white dark:bg-white rounded-xl shadow-lg p-6 flex items-center justify-center text-center"
           style={{ backfaceVisibility: "hidden" }}
         >
-          <p className="text-lg font-medium text-white">{question}</p>
+          <p className="text-lg font-medium text-black dark:text-black">
+            {question}
+          </p>
         </div>
 
         {/* Back of card */}
         <div
-          className="absolute w-full h-full backface-hidden rounded-xl shadow-lg p-6 flex items-center justify-center text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
+          className="absolute w-full h-full backface-hidden bg-white dark:bg-white rounded-xl shadow-lg p-6 flex items-center justify-center text-center"
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
         >
-          <p className="text-lg text-white">{answer}</p>
+          <p className="text-lg text-black dark:text-black">{answer}</p>
         </div>
       </motion.div>
     </div>

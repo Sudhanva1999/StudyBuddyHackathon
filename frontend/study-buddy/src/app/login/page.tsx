@@ -1,100 +1,152 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { login } from '@/lib/api';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { login } from "@/lib/api";
+import Image from "next/image";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     try {
       const data = await login(email, password);
       // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(data.user));
       // Redirect to home page
-      router.push('/');
+      router.push("/");
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError('An error occurred during login');
+        setError("An error occurred during login");
       }
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Sign in to your account
-          </h2>
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+      {/* Background gradient effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute -bottom-[40%] -right-[20%] w-[70%] h-[70%] rounded-full bg-pink-500/20 blur-3xl" />
+        <div className="absolute top-[20%] right-[20%] w-[50%] h-[50%] rounded-full bg-purple-500/20 blur-3xl" />
+      </div>
+
+      {/* Login card */}
+      <div className="max-w-md w-full m-4 relative">
+        <div className="bg-background/60 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20">
+          {/* Logo section */}
+          <div className="p-8 text-center">
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/logo.svg"
+                alt="StudyBuddy Logo"
+                width={280}
+                height={60}
+              />
+            </div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              Welcome Back
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Sign in to continue your learning journey
+            </p>
+          </div>
+
+          {/* Form section */}
+          <div className="p-8 pt-0">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {error && (
+                <div
+                  className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-lg"
+                  role="alert"
+                >
+                  <span className="block sm:inline">{error}</span>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-foreground"
+                  >
+                    Email address
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      className="appearance-none block w-full px-3 py-2 border border-input/50 rounded-lg bg-background/50 backdrop-blur-sm shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 sm:text-sm transition-all duration-200"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-foreground"
+                  >
+                    Password
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      className="appearance-none block w-full px-3 py-2 border border-input/50 rounded-lg bg-background/50 backdrop-blur-sm shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 sm:text-sm transition-all duration-200"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  className="relative w-full py-2.5 px-4 rounded-lg text-sm font-medium text-white overflow-hidden group"
+                >
+                  {/* Button gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-transform group-hover:scale-[1.02] duration-200" />
+
+                  {/* Button content */}
+                  <span className="relative">Sign in</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Sign up link */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Don't have an account?{" "}
+                <Link
+                  href="/register"
+                  className="font-medium text-foreground hover:text-primary transition-colors"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </div>
+          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{error}</span>
-            </div>
-          )}
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Sign in
-            </button>
-          </div>
-
-          <div className="text-sm text-center">
-            <Link
-              href="/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-            >
-              Don&apos;t have an account? Sign up
-            </Link>
-          </div>
-        </form>
       </div>
     </div>
   );

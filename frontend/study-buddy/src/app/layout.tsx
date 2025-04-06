@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ProtectedRoute } from "@/components/protected-route";
-import { Navbar } from "@/components/navbar";
+import { LayoutWrapper } from "@/components/layout-wrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,8 +27,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ProtectedRoute>
-            <Navbar />
-            {children}
+            <LayoutWrapper>{children}</LayoutWrapper>
           </ProtectedRoute>
         </ThemeProvider>
       </body>
