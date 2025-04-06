@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Loader2, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, RefreshCw, CheckCircle, XCircle, HelpCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
@@ -179,54 +179,61 @@ export function Quiz({ taskId }: QuizProps) {
 
   if (quizQuestions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8">
-        <p className="text-muted-foreground mb-4">No quiz questions available.</p>
-        <Button onClick={generateQuiz} disabled={generating}>
-          {generating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Generate Quiz
-            </>
-          )}
-        </Button>
+      <div className="flex flex-col h-full">
+        <div className="flex justify-between items-start p-4 border-b">
+          <h2 className="text-xl font-semibold">Quiz</h2>
+          <Button
+            onClick={generateQuiz}
+            disabled={generating}
+            className="flex items-center gap-2"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <HelpCircle className="h-4 w-4" />
+                <span>Generate Quiz</span>
+              </>
+            )}
+          </Button>
+        </div>
+        <div className="flex flex-col items-center pt-12 gap-4">
+          <p className="text-muted-foreground">No quiz questions available</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh</span>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full p-4 space-y-4 overflow-hidden">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Quiz</h2>
-        <div className="flex space-x-2">
-          {showResults ? (
-            <Button onClick={handleRefresh} variant="outline">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
-            </Button>
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-start p-4 border-b">
+        <h2 className="text-xl font-semibold">Quiz</h2>
+        <Button
+          onClick={generateQuiz}
+          disabled={generating}
+          className="flex items-center gap-2"
+        >
+          {generating ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating...</span>
+            </>
           ) : (
-            <Button onClick={checkAnswers} disabled={userAnswers.includes(-1)}>
-              Check Answers
-            </Button>
+            <>
+              <HelpCircle className="h-4 w-4" />
+              <span>Generate Quiz</span>
+            </>
           )}
-          <Button onClick={handleGenerateMore} variant="outline" disabled={generating}>
-            {generating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Generate More
-              </>
-            )}
-          </Button>
-        </div>
+        </Button>
       </div>
 
       {showResults && (
@@ -282,6 +289,34 @@ export function Quiz({ taskId }: QuizProps) {
             </RadioGroup>
           </Card>
         ))}
+      </div>
+      <div className="flex justify-end gap-2 p-4 border-t">
+        {showResults ? (
+          <>
+            <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </Button>
+            <Button variant="outline" onClick={handleGenerateMore} disabled={generating} className="flex items-center gap-2">
+              {generating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <HelpCircle className="h-4 w-4" />
+                  Generate More
+                </>
+              )}
+            </Button>
+          </>
+        ) : (
+          <Button onClick={checkAnswers} disabled={userAnswers.includes(-1)} className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4" />
+            Check Answers
+          </Button>
+        )}
       </div>
     </div>
   );

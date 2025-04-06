@@ -6,7 +6,7 @@ import React, {
   CSSProperties,
   useRef,
 } from "react";
-import { Loader2, RefreshCw, Bug, Wand2, ExternalLink } from "lucide-react";
+import { Loader2, RefreshCw, Bug, Wand2, ExternalLink, GitBranch } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import ReactFlow, {
@@ -661,50 +661,66 @@ export function MindMap({ taskId }: MindMapProps) {
   if (!mindmap) {
     console.log("Rendering empty state");
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
-        <p className="text-muted-foreground">No mind map available</p>
-        <div className="flex gap-2">
+      <div className="flex flex-col h-full">
+        <div className="flex justify-between items-start p-4 border-b">
+          <h2 className="text-xl font-semibold">Mind Map</h2>
           <Button
-            variant="outline"
-            onClick={exportMindMap}
-            className="flex items-center gap-2"
-            disabled={!mindmap || exporting}
-          >
-            {exporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ExternalLink className="h-4 w-4" />
-            )}
-            <span>{exporting ? "Exporting..." : "Open in New Window"}</span>
-          </Button>
-          <Button
-            variant="outline"
             onClick={generateMindMap}
-            className="flex items-center gap-2"
             disabled={generating}
+            className="flex items-center gap-2"
           >
             {generating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Generating...</span>
+              </>
             ) : (
-              <Wand2 className="h-4 w-4" />
+              <>
+                <GitBranch className="h-4 w-4" />
+                <span>Generate Mind Map</span>
+              </>
             )}
-            <span>{generating ? "Regenerating..." : "Regenerate"}</span>
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span>Refresh</span>
-          </Button>
+        </div>
+        <div className="flex flex-col items-center pt-12 gap-4">
+          <p className="text-muted-foreground">No mind map available</p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh</span>
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 h-full flex flex-col">
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-start p-4 border-b">
+        <h2 className="text-xl font-semibold">Mind Map</h2>
+        <Button
+          onClick={generateMindMap}
+          disabled={generating}
+          className="flex items-center gap-2"
+        >
+          {generating ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating...</span>
+            </>
+          ) : (
+            <>
+              <GitBranch className="h-4 w-4" />
+              <span>Generate Mind Map</span>
+            </>
+          )}
+        </Button>
+      </div>
       <Card className="p-6 flex-1 flex flex-col overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">{mindmap.topic}</h2>
@@ -721,19 +737,6 @@ export function MindMap({ taskId }: MindMapProps) {
                 <ExternalLink className="h-4 w-4" />
               )}
               <span>{exporting ? "Exporting..." : "Open in New Window"}</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={generateMindMap}
-              className="flex items-center gap-2"
-              disabled={generating}
-            >
-              {generating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Wand2 className="h-4 w-4" />
-              )}
-              <span>{generating ? "Regenerating..." : "Regenerate"}</span>
             </Button>
             <Button
               variant="outline"

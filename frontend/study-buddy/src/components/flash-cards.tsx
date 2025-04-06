@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FlashCard } from './ui/flash-card';
-import { Loader2, RefreshCw, Wand2 } from 'lucide-react';
+import { Loader2, RefreshCw, Wand2, BookOpen } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface FlashCardData {
@@ -222,26 +222,35 @@ export function FlashCards({ taskId }: FlashCardsProps) {
   if (flashcards.length === 0) {
     console.log("Rendering empty state");
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
-        <p className="text-muted-foreground">No flashcards available</p>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={generateFlashcards} 
-            className="flex items-center gap-2"
+      <div className="flex flex-col h-full">
+        <div className="flex justify-between items-start p-4 border-b">
+          <h2 className="text-xl font-semibold">Flashcards</h2>
+          <Button
+            onClick={generateFlashcards}
             disabled={generating}
+            className="flex items-center gap-2"
           >
             {generating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Generating...</span>
+              </>
             ) : (
-              <Wand2 className="h-4 w-4" />
+              <>
+                <BookOpen className="h-4 w-4" />
+                <span>Generate Flashcards</span>
+              </>
             )}
-            <span>{generating ? "Generating..." : "Generate Flashcards"}</span>
           </Button>
-          <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" />
-            <span>Refresh</span>
-          </Button>
+        </div>
+        <div className="flex flex-col items-center pt-12 gap-4">
+          <p className="text-muted-foreground">No flashcards available</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh</span>
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -250,6 +259,26 @@ export function FlashCards({ taskId }: FlashCardsProps) {
   console.log("Rendering flashcards grid with", flashcards.length, "cards");
   return (
     <div className="flex flex-col h-full">
+      <div className="flex justify-between items-start p-4 border-b">
+        <h2 className="text-xl font-semibold">Flashcards</h2>
+        <Button
+          onClick={generateFlashcards}
+          disabled={generating}
+          className="flex items-center gap-2"
+        >
+          {generating ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating...</span>
+            </>
+          ) : (
+            <>
+              <BookOpen className="h-4 w-4" />
+              <span>Generate Flashcards</span>
+            </>
+          )}
+        </Button>
+      </div>
       <div className="flex justify-end p-4 gap-2">
         <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
           <RefreshCw className="h-4 w-4" />
