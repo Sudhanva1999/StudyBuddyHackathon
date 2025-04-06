@@ -345,3 +345,18 @@ cython_debug/
 *.wmv
 *.flv
 *.mkv
+
+# ignore pdf files
+*.pdf
+
+# ignore llm output files
+llm_output.txt
+
+# ignore cache files
+cache/
+
+# ignore temp files
+temp/
+
+# ignore logs
+logs/
