@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import {
   GitBranch,
   HelpCircle,
   ClipboardList,
+  History,
 } from "lucide-react";
 import { ChatInterface } from "@/components/chat-interface";
 import {
@@ -33,6 +34,13 @@ import {
 import { FlashCards } from "@/components/flash-cards";
 import { MindMap } from "@/components/mind-map";
 import { Quiz } from "@/components/quiz";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Custom tooltip styles
 const tooltipStyles = `
@@ -80,6 +88,7 @@ This discussion explores artificial intelligence and its societal impact. The sp
 `;
 
 export default function ResultsPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [data, setData] = useState<any>(null);
   const filename = searchParams.get("filename") || "video";
@@ -303,9 +312,11 @@ export default function ResultsPage() {
       <style jsx global>{tooltipStyles}</style>
       <main className="m-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">
-            {isPdf ? "PDF Document" : filename}
-          </h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl font-bold">
+              {isPdf ? "PDF Document" : filename}
+            </h2>
+          </div>
           <div className="flex items-center gap-4">
             <Button
               variant="outline"

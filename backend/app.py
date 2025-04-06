@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
 import logging
@@ -21,6 +21,8 @@ import re
 from youtube_transcript_api import YouTubeTranscriptApi
 from urllib.parse import urlparse, parse_qs
 from PyPDF2 import PdfReader
+from pymongo import MongoClient
+import base64
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -177,7 +179,6 @@ def get_cached_results(video_name):
     if os.path.exists(cache_file):
         try:
             with open(cache_file, 'r') as f:
-                logger.info(f"Retrieved cached results for video: {video_name}")
                 return json.load(f)
         except Exception as e:
             logger.error(f"Error reading cache file: {str(e)}")
@@ -192,9 +193,24 @@ def save_to_cache(video_name, results):
     try:
         with open(cache_file, 'w') as f:
             json.dump(results, f)
-        logger.info(f"Saved results to cache for video: {video_name}")
     except Exception as e:
         logger.error(f"Error saving to cache: {str(e)}")
+
+def save_to_history(task_id, file_info, results):
+    try:
+        logger.info(f"Attempting to save history for task_id: {task_id}")
+        
+        history_doc = {
+            'task_id': task_id,
+            'timestamp': datetime.utcnow(),
+            'file_info': file_info,
+            'results': results
+        }
+        
+        result = mongo.db.processing_history.insert_one(history_doc)
+        logger.info(f"Successfully saved to history with id: {result.inserted_id}")
+    except Exception as e:
+        logger.error(f"Error saving to history: {e}")
 
 def process_video(task_id, video_path, audio_output):
     """Process video in background thread"""
@@ -241,9 +257,16 @@ def process_video(task_id, video_path, audio_output):
         # Save results to cache
         save_to_cache(video_name, results)
         
+        # Save to history with file info
+        file_info = {
+            'type': 'video',
+            'filename': os.path.basename(video_path),
+            'source': 'upload'
+        }
+        save_to_history(task_id, file_info, results)
+        
         processing_tasks[task_id]["status"] = "completed"
         processing_tasks[task_id]["results"] = results
-        logger.info(f"Task {task_id} completed. Transcript saved but flashcards not generated yet.")
         
         # Clean up temporary files
         if os.path.exists(video_path):
@@ -281,7 +304,6 @@ def get_video_id(url):
 def process_youtube_video(task_id, url):
     """Process YouTube video in background thread"""
     try:
-        logger.info(f"Starting YouTube video processing for task {task_id}")
         processing_tasks[task_id]["status"] = "uploaded"
 
         # Get video ID from URL
@@ -290,7 +312,6 @@ def process_youtube_video(task_id, url):
             raise ValueError("Invalid YouTube URL")
 
         # Get transcript from YouTube
-        logger.info(f"Fetching transcript for video ID: {video_id}")
         processing_tasks[task_id]["status"] = "transcribing"
         transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
         
@@ -298,12 +319,10 @@ def process_youtube_video(task_id, url):
         transcript_text = " ".join([segment["text"] for segment in transcript_list])
         
         # Generate summary
-        logger.info("Generating summary from transcript")
         processing_tasks[task_id]["status"] = "summarizing"
         summary = generate_notes(f'Please provide a concise summary of the following text:\n{transcript_text}')
         
         # Generate notes using the transcript
-        logger.info("Generating notes from transcript")
         processing_tasks[task_id]["status"] = "generating_notes"
         notes = generate_notes(f'Summary: {summary} \n\n\nNotes:\n{transcript_text}')
         
@@ -323,7 +342,14 @@ def process_youtube_video(task_id, url):
         
         # Cache the results
         save_to_cache(url, processing_tasks[task_id]["results"])
-        logger.info(f"Task {task_id} completed successfully")
+        
+        # Save to history with file info
+        file_info = {
+            'type': 'youtube',
+            'url': url,
+            'source': 'youtube'
+        }
+        save_to_history(task_id, file_info, processing_tasks[task_id]["results"])
         
     except Exception as e:
         logger.error(f"Error during YouTube processing: {str(e)}", exc_info=True)
@@ -374,9 +400,16 @@ def process_pdf(task_id, pdf_path):
         # Save results to cache
         save_to_cache(pdf_name, results)
         
+        # Save to history with file info
+        file_info = {
+            'type': 'pdf',
+            'filename': os.path.basename(pdf_path),
+            'source': 'upload'
+        }
+        save_to_history(task_id, file_info, results)
+        
         processing_tasks[task_id]["status"] = "completed"
         processing_tasks[task_id]["results"] = results
-        logger.info(f"Task {task_id} completed. PDF processed but flashcards not generated yet.")
         
         # Clean up temporary files
         if os.path.exists(pdf_path):
@@ -409,8 +442,6 @@ def health_check():
 def upload_video():
     """Handles video upload and initiates processing."""
     try:
-        logger.info("Starting video upload process")
-        
         if "video" not in request.files:
             logger.error("No video file in request")
             return jsonify({"error": "No file uploaded"}), 400
@@ -426,8 +457,6 @@ def upload_video():
         # Check if this video is already in the cache
         cached_results = get_cached_results(file.filename)
         if cached_results:
-            logger.info(f"Video {file.filename} found in cache, returning cached results")
-            
             # Initialize task status with cached results
             processing_tasks[task_id] = {
                 "status": "completed",
@@ -443,12 +472,10 @@ def upload_video():
                 "cached": True
             }), 200
 
-        logger.info(f"Processing file: {file.filename}")
         video_path = os.path.join(UPLOAD_FOLDER, f"{task_id}_{file.filename}")
         audio_output = os.path.join(OUTPUT_FOLDER, f"{task_id}_{os.path.splitext(file.filename)[0]}.mp3")
 
         # Save video file
-        logger.info("Saving video file")
         file.save(video_path)
         
         # Initialize task status
@@ -478,8 +505,6 @@ def upload_video():
 def upload_pdf():
     """Handles PDF upload and initiates processing."""
     try:
-        logger.info("Starting PDF upload process")
-        
         if "pdf" not in request.files:
             logger.error("No PDF file in request")
             return jsonify({"error": "No file uploaded"}), 400
@@ -499,8 +524,6 @@ def upload_pdf():
         # Check if this PDF is already in the cache
         cached_results = get_cached_results(file.filename)
         if cached_results:
-            logger.info(f"PDF {file.filename} found in cache, returning cached results")
-            
             # Initialize task status with cached results
             processing_tasks[task_id] = {
                 "status": "completed",
@@ -516,11 +539,9 @@ def upload_pdf():
                 "cached": True
             }), 200
 
-        logger.info(f"Processing file: {file.filename}")
         pdf_path = os.path.join(UPLOAD_FOLDER, f"{task_id}_{file.filename}")
 
         # Save PDF file
-        logger.info("Saving PDF file")
         file.save(pdf_path)
         
         # Initialize task status
@@ -549,14 +570,11 @@ def upload_pdf():
 @app.route("/status/<task_id>", methods=["GET"])
 def get_status(task_id):
     """Get the status and results of a processing task."""
-    logger.info(f"Status check requested for task_id: {task_id}")
-    
     if task_id not in processing_tasks:
         logger.error(f"Task not found: {task_id}")
         return jsonify({"error": "Task not found"}), 404
         
     task = processing_tasks[task_id]
-    logger.info(f"Current task status: {task['status']}")
     
     response = {
         "status": task["status"]
@@ -573,31 +591,20 @@ def get_status(task_id):
         response["cached"] = task["cached"]
     
     if task["status"] == "completed":
-        logger.info("Task completed, including results in response")
         if "results" not in task:
             logger.error("Task marked as completed but no results found")
             response["error"] = "Results not found for completed task"
         else:
-            logger.info(f"Results keys: {list(task['results'].keys())}")
-            if "flashcards" in task["results"]:
-                logger.info(f"Number of flashcards: {len(task['results']['flashcards'])}")
-                if len(task["results"]["flashcards"]) == 0:
-                    logger.warning("Flashcards array is empty")
-            else:
-                logger.warning("No flashcards key in results")
             response["results"] = task["results"]
     elif task["status"] == "error":
         logger.error(f"Task error: {task.get('error', 'Unknown error')}")
         response["error"] = task["error"]
     
-    logger.info(f"Sending response: {response}")
     return jsonify(response), 200
 
 @app.route("/debug/tasks", methods=["GET"])
 def debug_tasks():
     """Debug endpoint to check the current state of processing tasks."""
-    logger.info("Debug tasks endpoint accessed")
-    
     # Create a simplified version of the tasks for debugging
     debug_tasks = {}
     for task_id, task in processing_tasks.items():
@@ -610,14 +617,11 @@ def debug_tasks():
             "cached": task.get("cached", False)
         }
     
-    logger.info(f"Debug tasks response: {debug_tasks}")
     return jsonify(debug_tasks), 200
 
 @app.route("/generate_flashcards/<task_id>", methods=["POST"])
 def generate_flashcards_endpoint(task_id):
     """Generate flashcards for a specific task on demand."""
-    logger.info(f"Flashcard generation requested for task_id: {task_id}")
-    
     if task_id not in processing_tasks:
         logger.error(f"Task not found: {task_id}")
         return jsonify({"error": "Task not found"}), 404
@@ -639,19 +643,16 @@ def generate_flashcards_endpoint(task_id):
         transcript_text = task["results"]["transcript"]["text"]
         
         # Generate flashcards
-        logger.info(f"Generating flashcards for task {task_id}")
         flashcards = generate_flashcards(transcript_text)
         
         # Update the task results with the new flashcards
         if "results" in task:
             task["results"]["flashcards"] = flashcards
-            logger.info(f"Updated task {task_id} with {len(flashcards)} flashcards")
             
             # If this was a cached result, update the cache file
             if task.get("cached", False):
                 video_name = task["filename"]
                 save_to_cache(video_name, task["results"])
-                logger.info(f"Updated cache for video: {video_name}")
         
         return jsonify({
             "status": "success",
@@ -665,8 +666,6 @@ def generate_flashcards_endpoint(task_id):
 @app.route("/generate_mindmap/<task_id>", methods=["POST"])
 def generate_mindmap_endpoint(task_id):
     """Generate a mind map for a specific task on demand."""
-    logger.info(f"Mind map generation requested for task_id: {task_id}")
-    
     if task_id not in processing_tasks:
         logger.error(f"Task not found: {task_id}")
         return jsonify({"error": "Task not found"}), 404
@@ -688,19 +687,16 @@ def generate_mindmap_endpoint(task_id):
         transcript_text = task["results"]["transcript"]["text"]
         
         # Generate mind map
-        logger.info(f"Generating mind map for task {task_id}")
         mindmap = generate_mindmap(transcript_text)
         
         # Update the task results with the new mind map
         if "results" in task:
             task["results"]["mindmap"] = mindmap
-            logger.info(f"Updated task {task_id} with mind map")
             
             # If this was a cached result, update the cache file
             if task.get("cached", False):
                 video_name = task["filename"]
                 save_to_cache(video_name, task["results"])
-                logger.info(f"Updated cache for video: {video_name}")
         
         return jsonify({
             "status": "success",
@@ -791,7 +787,6 @@ def login():
             return jsonify({"error": "Email and password are required"}), 400
             
         user = User.get_user_by_email(data["email"])
-        logger.info(f"User found: {bool(user)}")
         
         if not user:
             logger.info("User not found")
@@ -878,8 +873,6 @@ def add_flashcard(metadata_id):
 @app.route("/chat/<task_id>", methods=["POST"])
 def chat_endpoint(task_id):
     """Handle chat questions using LangChain conversation with context."""
-    logger.info(f"Chat request received for task_id: {task_id}")
-    
     if task_id not in processing_tasks:
         logger.error(f"Task not found: {task_id}")
         return jsonify({"error": "Task not found"}), 404
@@ -909,7 +902,6 @@ def chat_endpoint(task_id):
         context = task["results"]["notes"]
         
         # Generate response using LangChain
-        logger.info(f"Generating chat response for task {task_id}")
         response = chat_with_context(task_id, context, question)
         
         return jsonify({
@@ -938,8 +930,6 @@ def clear_chat_endpoint(task_id):
 def process_youtube():
     """Handles YouTube video processing."""
     try:
-        logger.info("Starting YouTube video processing request")
-        
         data = request.get_json()
         if not data or "url" not in data:
             logger.error("No URL provided in request")
@@ -953,8 +943,6 @@ def process_youtube():
         # Check if this URL is already in the cache
         cached_results = get_cached_results(url)
         if cached_results:
-            logger.info(f"YouTube URL {url} found in cache, returning cached results")
-            
             # Initialize task status with cached results
             processing_tasks[task_id] = {
                 "status": "completed",
@@ -970,8 +958,6 @@ def process_youtube():
                 "cached": True
             }), 200
 
-        logger.info(f"Processing YouTube URL: {url}")
-        
         # Initialize task status
         processing_tasks[task_id] = {
             "status": "uploaded",
@@ -994,6 +980,49 @@ def process_youtube():
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+
+@app.route('/history', methods=['GET'])
+def get_history():
+    try:
+        # Get all history documents, sorted by timestamp
+        history = list(mongo.db.processing_history.find(
+            {}, 
+            {'_id': 0}  # Exclude MongoDB _id
+        ).sort('timestamp', -1))  # Sort by newest first
+        
+        return jsonify(history)
+    except Exception as e:
+        logger.error(f"Error fetching history: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/history/<task_id>', methods=['GET'])
+def get_history_item(task_id):
+    try:
+        # Find the specific history document
+        history_item = mongo.db.processing_history.find_one(
+            {'task_id': task_id},
+            {'_id': 0}  # Exclude MongoDB _id
+        )
+        
+        if history_item:
+            # If it's a PDF file, include the file data
+            if history_item['file_info']['type'] == 'pdf':
+                # Get the PDF file path from the upload folder
+                pdf_filename = history_item['file_info']['filename']
+                pdf_path = os.path.join(UPLOAD_FOLDER, f"{task_id}_{pdf_filename}")
+                
+                if os.path.exists(pdf_path):
+                    # Read the PDF file and encode it as base64
+                    with open(pdf_path, 'rb') as pdf_file:
+                        pdf_data = pdf_file.read()
+                        history_item['file'] = base64.b64encode(pdf_data).decode('utf-8')
+            
+            return jsonify(history_item)
+        else:
+            return jsonify({"error": "History item not found"}), 404
+    except Exception as e:
+        logger.error(f"Error fetching history item: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     logger.info(f"🚀 Server running on http://127.0.0.1:{PORT}")

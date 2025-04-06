@@ -1,86 +1,96 @@
-# CS5500: Foundations of Software Engineering - Detailed Lecture Notes
+## CS5500: Foundations of Software Engineering - Detailed Lecture Notes
 
-These notes provide a comprehensive overview of the CS5500: Foundations of Software Engineering course, covering key concepts, topics, policies, and technologies.  They expand upon the provided transcription, adding context and detail where appropriate.
+These notes provide a comprehensive overview of the CS5500: Foundations of Software Engineering course, encompassing key concepts, topics covered, technologies used, course policies, and assessment details.
 
-## I. Introduction
+### I. Introduction
 
-This course aims to provide students with a strong foundation in software engineering principles and practices. The emphasis is on practical application, with a significant team-based final project and hands-on experience with a modern technology stack.  The goal is to prepare students for the challenges of real-world software development.
+This course aims to establish a strong foundation in software engineering principles and best practices.  The emphasis is on practical application, culminating in a team-based project where students develop a full-stack web application using a modern technology stack.  This hands-on approach solidifies theoretical concepts and provides valuable real-world experience.
 
-## II. Course Objectives
+### II. Course Objectives
 
-Upon successful completion of this course, students will be able to:
+Upon successful completion of this course, students should be proficient in:
 
-*   **Develop, Manage, and Maintain Software:**  Gain the necessary skills to navigate the entire software lifecycle, from initial design to ongoing maintenance.
-*   **Elicit and Define Requirements:**  Effectively gather, analyze, and document software requirements from stakeholders.
-*   **Collaborate and Manage Teams:** Work effectively in teams, managing project timelines, communication, and contributions.
-*   **Gain Full-Stack Development Experience:**  Apply software engineering principles in a practical setting using a modern tech stack and a formal software engineering process.
+*   Developing, managing, and maintaining software systems.
+*   Eliciting, defining, documenting, and managing software requirements.
+*   Collaborating effectively within a software development team.
+*   Applying a formal software engineering process to full-stack development.
 
-## III. Major Topics Covered
+### III. Major Topics Covered
 
-This course will cover a range of essential software engineering topics:
+The course curriculum covers the following key areas of software engineering:
 
-1.  **Software Processes:**
-    *   **Software Process Models:**  Understanding different software development methodologies, including Waterfall, Incremental, and Agile, and their appropriate applications. This will involve comparing their strengths and weaknesses, and understanding how to choose the right model for a given project.
-    *   **Process Activities:** Deep dive into the activities within each process model, including planning, analysis, design, implementation, testing, and deployment.
+1.  **Software Processes:** This section explores various software development lifecycle models, their strengths, weaknesses, and applicability in different project contexts.
+    *   **Models:** Waterfall, Incremental, Agile, and other relevant models will be discussed.
+    *   **Applications:**  Understanding when to apply specific process models based on project characteristics and constraints.
 
-2.  **Requirements Engineering:**
-    *   **Elicitation and Analysis:** Techniques for gathering requirements from stakeholders, analyzing their needs, and resolving conflicts.
-    *   **Specification and Documentation:**  Clearly documenting requirements using various methods, including user stories, use cases, and formal specifications.
-    *   **Requirements Management:**  Managing changes to requirements throughout the project lifecycle.
+2.  **Requirements Engineering:**  This module focuses on effectively gathering, analyzing, documenting, and managing software requirements.
+    *   **Methods & Techniques:**  Formal and informal methods for eliciting requirements from stakeholders, managing changing requirements, and ensuring traceability.
+    *   **Documentation:**  Best practices for documenting requirements clearly and unambiguously.
 
-3.  **Software Architecture:**
-    *   **Architectural Patterns:**  Understanding common architectural patterns like Microservices, Layered Architecture, Client-Server, and their trade-offs.  This will involve analyzing the suitability of different architectures for various project types.
-    *   **Design Patterns:**  Exploring and applying common design patterns such as Singleton, Factory, Observer, and MVC (Model-View-Controller) to improve code organization, reusability, and maintainability.
+3.  **Software Architecture:** This section delves into the principles of sound software design and architectural patterns.
+    *   **Architectural Patterns:**  Model-View-Controller (MVC), Singleton, Observer, and other common patterns.
+    *   **Design Principles:** SOLID principles (Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion) and their application in building maintainable and extensible software.
 
-4.  **System Modeling:**
-    *   **Unified Modeling Language (UML):**  Learning to use UML diagrams (e.g., class diagrams, sequence diagrams, use case diagrams) for visualizing and communicating system design.
-    *   **Other Modeling Tools and Techniques:** Exploring other modeling tools and techniques beyond UML,  like data flow diagrams and state charts, to represent different aspects of a software system.
+4.  **System Modeling:**  This module introduces modeling tools and techniques to visually represent system behavior and structure.
+    *   **UML (Unified Modeling Language):**  Using UML diagrams like Use Case Diagrams, Class Diagrams, and Sequence Diagrams to model different aspects of the system.
+    *   **Modeling Tools:**  Hands-on experience with software tools that support UML and other modeling techniques.
 
-5.  **Software Testing:**
-    *   **Test-Driven Development (TDD):**  Writing tests *before* writing code to ensure code quality and facilitate refactoring.
-    *   **Behavior-Driven Development (BDD):**  Focusing on user behavior and acceptance criteria to guide development.
-    *   **Testing Strategies and Techniques:**  Applying various testing methods, including unit testing, integration testing, system testing, and acceptance testing, to ensure software quality and reliability.
+5.  **Software Testing:** This section emphasizes the importance of testing throughout the software development lifecycle.
+    *   **Test-Driven Development (TDD):**  Writing tests before writing the code, fostering a test-first approach.
+    *   **Behavior-Driven Development (BDD):** Focusing on user behavior and defining acceptance criteria.
+    *   **Testing Levels:**  Understanding and applying different testing levels, including unit testing, integration testing, system testing, and acceptance testing.
 
-6.  **Software Maintenance & Evolution:**
-    *   **Continuous Integration (CI):**  Frequently integrating code changes into a shared repository to identify and address integration issues early.  This will involve understanding the tools and practices used in CI pipelines.
-    *   **Continuous Delivery (CD):**  Automating the release pipeline to enable frequent and reliable software releases.  This includes exploring different deployment strategies and understanding the role of automation in CD.
-    *   **Best Practices:**  Adopting best practices for maintaining and evolving software systems, including code refactoring, version control, and documentation.
+6.  **Software Maintenance & Evolution:**  This module addresses the ongoing process of maintaining and evolving software systems after deployment.
+    *   **Continuous Integration and Continuous Delivery (CI/CD):** Automating the build, test, and deployment processes for faster and more reliable releases.
+    *   **Version Control Systems:** Utilizing Git and understanding branching strategies for effective collaboration and code management.
 
-7.  **Software Security:**
-    *   **Threat Modeling:**  Identifying and mitigating potential security threats early in the design process using various threat modeling methodologies like STRIDE and DREAD.
-    *   **Vulnerability Detection and Prevention:**  Learning about common software vulnerabilities (e.g., SQL injection, cross-site scripting) and techniques for preventing them.  This will involve understanding secure coding practices and security testing methods.
+7.  **Software Security:** This section covers essential security concepts and practices.
+    *   **Threat Modeling:**  Identifying and mitigating potential security risks early in the development process.
+    *   **Vulnerability Detection & Prevention:** Techniques to detect and prevent common software vulnerabilities.
 
-## IV. Technology Stack
 
-The course will primarily use the following technologies:
+### IV. Technology Stack
+
+The course utilizes a modern and industry-relevant technology stack:
 
 *   **Frontend:** TypeScript, React
 *   **Backend:** Node.js, Express.js
 *   **Database:** MongoDB
 
-**Rationale:** This stack is chosen for its industry relevance, wide adoption, and support for various software engineering tools.  It promotes adaptability, a crucial skill in the ever-evolving tech landscape.
+This stack provides a robust environment for full-stack web development. While the instructor will cover the stack's core concepts, students are expected to supplement their learning with independent study, particularly for TypeScript.  Using alternative stacks for the final project is permissible, but with limited support from course staff.
 
-**TypeScript Self-Study:** Students are expected to familiarize themselves with TypeScript basics before January 17th, 2025, using provided resources and a practice lab on Canvas.
+### V. Course Logistics
 
-**Alternative Tech Stacks for Final Project:** While alternative stacks are permitted for the final project, this limits support from course staff. Students choosing an alternative stack are responsible for ensuring it supports all required tools and functionalities.
-
-## V. Course Logistics (Continued from Transcription)
-
-*  **Attendance and Participation:** While lecture recordings are available upon request for emergencies, regular attendance and active participation are strongly encouraged for optimal learning.  Exercises and in-class discussions are integral parts of the learning process.
-
-## VI. Recommended Textbooks (Continued from Transcription)
-
-These texts offer additional insights and deeper understanding of the topics covered in the course.
-
-## VII. Communication and Support (Continued from Transcription)
+*   **Course Materials:** Canvas will be the central platform for accessing all course resources, including lecture slides, assignments, and announcements.
+*   **Meeting Times:**  Refer to the course syllabus for specific meeting times and locations for each section. Both sections cover the same content.
+*   **Recommended Textbooks:**  Several recommended textbooks delve deeper into specific topics, covering software engineering fundamentals, refactoring, UML, persistence, user stories, and value-sensitive design. Consult the syllabus for the complete list.
 
 
-## VIII. Assessments and Grading (Continued from Transcription)
+### VI. Communication & Collaboration
+
+*   **Piazza:** The primary platform for all course-related discussions, questions, and announcements.  Avoid using Piazza for grade complaints or posting complete assignment solutions.  Refer to the syllabus for detailed Piazza etiquette.
+*   **Email:**  Reserved for personal matters, scheduling appointments with instructors, and reporting technical issues with Canvas. Adhere to the email etiquette guidelines outlined in the syllabus.
+
+### VII. Assessments and Grading
+
+The course grade is determined by the following components:
+
+*   **Exercises (10%):** In-class programming labs and discussion posts reinforcing lecture concepts.
+*   **Assignments (45%):** Individual programming projects, software engineering activities, including two individual projects focused on the technology stack and different software architectures. Additional assignments cover system modeling, testing, and a group threat modeling exercise.
+*   **Final Project (30% + 15% Presentation):**  A group project (groups of two) involving proposal submission, implementation, testing, project management plan, CI process, and a final presentation.
+*   **Grading Scheme:** Specific assignment weights and grade cutoffs are detailed in the syllabus.
 
 
-## IX. Course Policies (Continued from Transcription)
+### VIII. Course Policies
+
+*   **Late Policy:**  Exercises and individual assignments have a 48-hour grace period.  Group assignments cannot be submitted late.
+*   **Re-grades:**  Submit re-grade requests via email within one week of receiving graded work.
+*   **Academic Integrity:**  Plagiarism and other forms of academic dishonesty are not tolerated and will result in severe penalties.
+*   **Generative AI Policy:** Permitted for individual and final projects, but prohibited for written assignments.
+*   **Students with Disabilities:** Accommodations are available through Disability Access Services. Contact the instructor with relevant documentation.
+*   **Inclusivity:** The course promotes a respectful and inclusive learning environment.  Share your preferred name and pronouns with the instructor.
 
 
-## X. Key Takeaways
+### IX. Key Takeaways
 
-This course provides a robust introduction to the principles and best practices of software engineering.  Active participation, collaboration, adherence to course policies, and hands-on project experience are essential for success. The course equips students with the skills and knowledge needed to tackle real-world software development challenges and thrive in the software engineering field.
+This course provides a hands-on learning experience, emphasizing the practical application of software engineering principles using a modern technology stack. Active participation, collaboration, and adherence to course policies are essential for success.  Familiarize yourself with the technology stack early on, manage your time effectively, and leverage available resources like Piazza and office hours for assistance.
