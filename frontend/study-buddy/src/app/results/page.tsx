@@ -454,12 +454,7 @@ export default function ResultsPage() {
                 <TabsContent value="quiz" className="mt-4">
                   <Card className="p-0 overflow-hidden h-[800px]">
                     {taskId ? (
-                      <>
-                        <div className="p-2 text-xs text-muted-foreground">
-                          Task ID: {taskId}
-                        </div>
-                        <Quiz taskId={taskId} />
-                      </>
+                      <Quiz taskId={taskId} />
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-500">
                         No quiz available
