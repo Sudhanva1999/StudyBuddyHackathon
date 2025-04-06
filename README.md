@@ -34,6 +34,12 @@ StudyBuddy was born from the challenges students face in effectively processing 
   - 📚 Study History
   - 📥 PDF Export
 
+## 🏗️ Architecture
+
+<div align="center">
+  <img src="./documents/architecture.png" alt="StudyBuddy Architecture" width="100%"/>
+</div>
+
 ## 🚀 Tech Stack
 
 ### Frontend
