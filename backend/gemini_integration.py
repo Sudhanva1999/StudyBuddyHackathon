@@ -276,3 +276,71 @@ def generate_mindmap(transcript_text):
                 }
             ]
         } 
+
+def generate_quiz(transcript_text):
+    """
+    Generate quiz questions based on the transcript text.
+    
+    Args:
+        transcript_text (str): The transcript text to generate quiz questions from
+        
+    Returns:
+        list: A list of quiz questions with multiple choice options
+    """
+    try:
+        # Initialize the model
+        logger.info("Initializing Gemini model for quiz generation")
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        
+        # Create the prompt
+        prompt = f"""You are an AI that generates meaningful multiple-choice quiz questions from transcriptions.
+        
+        Generate 5 multiple-choice quiz questions from the following transcription:
+        {transcript_text}
+        
+        Please follow these guidelines:
+        - Each question should have 4 options (A, B, C, D)
+        - One option should be the correct answer
+        - The questions should test understanding of key concepts from the transcript
+        - The questions should be challenging but fair
+        - The options should be plausible and related to the topic
+        - Format the response as a JSON array with the following structure:
+          [
+            {{
+              "question": "The question text",
+              "options": ["Option A", "Option B", "Option C", "Option D"],
+              "correctAnswer": 0  // Index of the correct answer (0-3)
+            }},
+            ...
+          ]
+        """
+        
+        # Generate the response
+        logger.info("Generating quiz questions with Gemini")
+        response = model.generate_content(prompt)
+        
+        # Extract the response text
+        response_text = response.text
+        
+        # Parse the JSON response
+        try:
+            # Find the JSON part in the response
+            json_start = response_text.find('[')
+            json_end = response_text.rfind(']') + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_str = response_text[json_start:json_end]
+                quiz_data = json.loads(json_str)
+                logger.info(f"Successfully generated {len(quiz_data)} quiz questions")
+                return quiz_data
+            else:
+                logger.error("Could not find JSON in response")
+                return []
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON: {e}")
+            logger.error(f"Response text: {response_text}")
+            return []
+            
+    except Exception as e:
+        logger.error(f"Error generating quiz: {e}")
+        return [] 

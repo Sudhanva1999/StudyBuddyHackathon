@@ -4,7 +4,7 @@ import os
 import logging
 from google_speech import transcribe_audio
 from video_to_audio import convert_video_to_audio
-from gemini_integration import generate_notes, generate_flashcards, generate_mindmap
+from gemini_integration import generate_notes, generate_flashcards, generate_mindmap, generate_quiz
 from chat_integration import chat_with_context, clear_conversation
 import threading
 import uuid
@@ -577,6 +577,41 @@ def generate_mindmap_endpoint(task_id):
     except Exception as e:
         logger.error(f"Error generating mind map: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error generating mind map: {str(e)}"}), 500
+
+@app.route("/generate_quiz/<task_id>", methods=["POST"])
+def generate_quiz_endpoint(task_id):
+    """
+    Generate quiz questions based on the transcript.
+    """
+    try:
+        # Check if task exists
+        if task_id not in processing_tasks:
+            return jsonify({"error": "Task not found"}), 404
+        
+        # Check if task is completed
+        if processing_tasks[task_id]["status"] != "completed":
+            return jsonify({"error": "Task not completed yet"}), 400
+        
+        # Get the transcript
+        transcript = processing_tasks[task_id]["results"].get("transcript", {}).get("text", "")
+        
+        if not transcript:
+            return jsonify({"error": "No transcript available"}), 400
+        
+        # Generate quiz questions
+        quiz_questions = generate_quiz(transcript)
+        
+        # Update the task results
+        processing_tasks[task_id]["results"]["quiz"] = quiz_questions
+        
+        return jsonify({
+            "status": "success",
+            "quiz": quiz_questions
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating quiz: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/users", methods=["POST"])
 def create_user():
