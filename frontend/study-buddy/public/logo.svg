@@ -1,0 +1,39 @@
+<svg viewBox="0 0 380 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="50%" stop-color="#8B5CF6" />
+      <stop offset="100%" stop-color="#EC4899" />
+    </linearGradient>
+  </defs>
+
+  <!-- Icon container -->
+  <g transform="translate(30, 25)">
+    <!-- Circular AI assistant icon -->
+    <circle cx="25" cy="25" r="25" fill="white" stroke="url(#grad)" stroke-width="2"/>
+    
+    <!-- Graduation cap on top -->
+    <polygon points="25,5 40,12 25,19 10,12" fill="url(#grad)"/>
+    <line x1="25" y1="19" x2="25" y2="25" stroke="url(#grad)" stroke-width="2"/>
+    <circle cx="25" cy="25" r="2" fill="url(#grad)"/>
+    
+    <!-- Stylized robot face / AI assistant -->
+    <rect x="15" y="30" width="20" height="10" rx="5" fill="url(#grad)"/>
+    <circle cx="18" cy="25" r="3" fill="white" stroke="url(#grad)" stroke-width="1.5"/>
+    <circle cx="32" cy="25" r="3" fill="white" stroke="url(#grad)" stroke-width="1.5"/>
+    
+    <!-- Notecards / Study materials fanned out from bottom -->
+    <rect x="5" y="45" width="15" height="20" rx="2" transform="rotate(-15,5,45)" fill="white" stroke="url(#grad)" stroke-width="1.5"/>
+    <rect x="30" y="45" width="15" height="20" rx="2" transform="rotate(15,30,45)" fill="white" stroke="url(#grad)" stroke-width="1.5"/>
+  </g>
+  
+  <!-- Brand Name -->
+  <text x="90" y="50" font-family="Segoe UI, sans-serif" font-size="30" font-weight="700" fill="url(#grad)">
+    StudyBuddy
+  </text>
+
+  <!-- Tagline -->
+  <text x="90" y="75" font-family="Segoe UI, sans-serif" font-size="14" fill="#6B7280">
+    Learn faster, smarter, and better
+  </text>
+</svg>

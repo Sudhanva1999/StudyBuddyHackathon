@@ -25,3 +25,4 @@ pymongo
 dnspython
 regex
 sentence-transformers
+PyPDF2

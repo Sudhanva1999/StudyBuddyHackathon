@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { LogOut, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -9,18 +10,24 @@ import { ThemeToggle } from "@/components/theme-toggle";
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const isPublicPage = ['/login', '/register'].includes(pathname);
+  const isPublicPage = ["/login", "/register"].includes(pathname);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    router.push('/login');
+    localStorage.removeItem("user");
+    router.push("/login");
   };
 
   return (
     <header className="border-b">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="text-2xl font-bold">
-          StudyBuddy
+          {/* Logo */}
+          <Image
+            src="/logo.svg"
+            alt="StudyBuddy Logo"
+            width={280}
+            height={60}
+          />
         </Link>
         <div className="flex items-center gap-4">
           {!isPublicPage && (
@@ -46,4 +53,4 @@ export function Navbar() {
       </div>
     </header>
   );
-} 
+}

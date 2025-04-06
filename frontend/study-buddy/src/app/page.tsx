@@ -18,23 +18,31 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-8">
-            <Upload onTaskIdUpdate={handleTaskIdUpdate} />
-            {taskId && (
+        {/* Initial state: show upload component centered and wider */}
+        {!taskId && (
+          <div className="flex justify-center">
+            <div className="w-full max-w-4xl">
+              <Upload onTaskIdUpdate={handleTaskIdUpdate} />
+            </div>
+          </div>
+        )}
+
+        {/* After upload: show grid layout with content */}
+        {taskId && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-8">
+              <Upload onTaskIdUpdate={handleTaskIdUpdate} />
               <div className="space-y-4">
                 <FlashCards taskId={taskId} />
                 <MindMap taskId={taskId} />
               </div>
-            )}
-          </div>
+            </div>
 
-          {taskId && (
             <div className="space-y-8">
               <Chat taskId={taskId} />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
