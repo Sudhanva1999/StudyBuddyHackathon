@@ -5,6 +5,10 @@
   <p>Transform your learning experience with AI-powered study tools</p>
 </div>
 
+## Inspiration
+
+StudyBuddy was born from the challenges students face in effectively processing and retaining information from educational videos and documents. We recognized that traditional note-taking methods often fall short in capturing the full depth of learning materials, and students need more interactive and engaging ways to study. Our inspiration came from the desire to create an AI-powered study companion that could transform passive learning into an active, engaging experience.
+
 ## 🌟 Features
 
 - **Video & PDF Processing**
