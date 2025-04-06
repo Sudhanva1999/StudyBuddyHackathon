@@ -49,8 +49,9 @@ export default function LoginPage() {
               <Image
                 src="/logo.svg"
                 alt="StudyBuddy Logo"
-                width={280}
-                height={60}
+                width={200}
+                height={40}
+                style={{ padding: "10px" }}
               />
             </div>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
